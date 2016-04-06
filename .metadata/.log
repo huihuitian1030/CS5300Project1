@@ -1,0 +1,84 @@
+!SESSION 2016-04-06 16:55:32.469 -----------------------------------------------
+eclipse.buildId=4.5.2.M20160212-1500
+java.version=1.7.0_13
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -keyring /Users/ishiamae/.eclipse_keyring -showlocation
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.jee.product -data /Users/ishiamae/Documents/workspace5300/CS5300Project1 -product org.eclipse.epp.package.jee.product -keyring /Users/ishiamae/.eclipse_keyring -showlocation
+
+!ENTRY org.eclipse.core.net 1 0 2016-04-06 16:55:38.660
+!MESSAGE System property http.nonProxyHosts has been set to local|*.local|169.254/16|*.169.254/16 by an external source. This value will be overwritten using the values from the preferences
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 16:55:43.905
+!MESSAGE Starting the AWS toolkit core plugin...
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 16:55:45.821
+!MESSAGE No profile found: default
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 16:55:45.848
+!MESSAGE Monitoring content of /Users/ishiamae/.aws/credentials
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 16:55:45.958
+!MESSAGE AWS toolkit core plugin initialized after 2055 milliseconds.
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 16:55:45.970
+!MESSAGE The current accountId is not found in the system. Switching to the default account.
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 16:55:46.192
+!MESSAGE Initialized a new Cognito identity us-east-1:bc26106b-01cc-4e26-977c-5fe5ab00bef5
+
+!ENTRY org.eclipse.wst.server.discovery 1 0 2016-04-06 16:56:17.062
+!MESSAGE cacheFile=file:/Applications/Eclipse.app/Contents/Eclipse/configuration/org.eclipse.wst.server.discovery/serverAdapterSitesDetails.xml
+
+!ENTRY org.eclipse.wst.server.discovery 1 0 2016-04-06 16:56:24.192
+!MESSAGE cacheFile=file:/Applications/Eclipse.app/Contents/Eclipse/configuration/org.eclipse.wst.server.discovery/serverAdapterSitesDetails.xml
+!SESSION 2016-04-06 17:03:10.853 -----------------------------------------------
+eclipse.buildId=4.5.2.M20160212-1500
+java.version=1.7.0_13
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -keyring /Users/ishiamae/.eclipse_keyring -showlocation
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -data /Users/ishiamae/Documents/workspace5300/CS5300Project1 -product org.eclipse.epp.package.jee.product -keyring /Users/ishiamae/.eclipse_keyring -showlocation
+
+!ENTRY org.eclipse.core.net 1 0 2016-04-06 17:03:17.508
+!MESSAGE System property http.nonProxyHosts has been set to local|*.local|169.254/16|*.169.254/16 by an external source. This value will be overwritten using the values from the preferences
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:03:23.374
+!MESSAGE Starting the AWS toolkit core plugin...
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:03:25.591
+!MESSAGE Monitoring content of /Users/ishiamae/.aws/credentials
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:03:25.798
+!MESSAGE AWS toolkit core plugin initialized after 2426 milliseconds.
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:03:25.806
+!MESSAGE Found valid identity id cache us-east-1:bc26106b-01cc-4e26-977c-5fe5ab00bef5
+
+!ENTRY org.eclipse.wst.server.discovery 1 0 2016-04-06 17:03:26.984
+!MESSAGE cacheFile=file:/Applications/Eclipse.app/Contents/Eclipse/configuration/org.eclipse.wst.server.discovery/serverAdapterSitesDetails.xml
+!SESSION 2016-04-06 17:05:24.700 -----------------------------------------------
+eclipse.buildId=4.5.2.M20160212-1500
+java.version=1.7.0_13
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -keyring /Users/ishiamae/.eclipse_keyring -showlocation
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -product org.eclipse.epp.package.jee.product -data /Users/ishiamae/Documents/workspace5300/CS5300Project1 -product org.eclipse.epp.package.jee.product -keyring /Users/ishiamae/.eclipse_keyring -showlocation
+
+!ENTRY org.eclipse.core.net 1 0 2016-04-06 17:05:31.071
+!MESSAGE System property http.nonProxyHosts has been set to local|*.local|169.254/16|*.169.254/16 by an external source. This value will be overwritten using the values from the preferences
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:05:36.791
+!MESSAGE Starting the AWS toolkit core plugin...
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:05:38.981
+!MESSAGE Monitoring content of /Users/ishiamae/.aws/credentials
+
+!ENTRY org.eclipse.wst.server.discovery 1 0 2016-04-06 17:05:39.022
+!MESSAGE cacheFile=file:/Applications/Eclipse.app/Contents/Eclipse/configuration/org.eclipse.wst.server.discovery/serverAdapterSitesDetails.xml
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:05:39.127
+!MESSAGE AWS toolkit core plugin initialized after 2337 milliseconds.
+
+!ENTRY com.amazonaws.eclipse.core 1 0 2016-04-06 17:05:39.137
+!MESSAGE Found valid identity id cache us-east-1:bc26106b-01cc-4e26-977c-5fe5ab00bef5

@@ -1,0 +1,27 @@
+package cs5300project1b;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class CleanUp extends Thread{
+	@Override
+	public void run() {
+		while(true) {
+			ConcurrentHashMap<Integer,SessionInfo> map = HelloUser.map;
+			Iterator<Integer> keys = map.keySet().iterator();
+			Date current = new Date();
+			while(keys.hasNext()){
+				int key = keys.next();
+				if (map.get(key).getExpriationTime().before(current)) {
+					map.remove(key);
+				}
+			}
+			try{
+				Thread.sleep(2*60*1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	} 
+}

@@ -1,0 +1,134 @@
+package cs5300Project1b;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Servlet implementation class HelloUser
+ */
+@WebServlet("/HelloUser")
+public class HelloUser extends HttpServlet {
+	protected static ConcurrentHashMap<Integer,SessionInfo> map = new ConcurrentHashMap<Integer, SessionInfo>();
+	
+	public static int sessionId = 0;
+	
+	private static final long serialVersionUID = 1L;
+	
+	private static final String cookieName = "CS5300PROJ1SESSION";
+	
+	private static final long sessionExpireTime = 30*1000;
+	
+	private static Thread clean = new CleanUp();
+
+    /**
+     * Default constructor. 
+     */
+    public HelloUser() {
+        // TODO Auto-generated constructor stub
+    	super();
+    	clean.start();
+    }
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		System.out.println(map.size());
+		response.setContentType("text/html");
+		PrintWriter writer = response.getWriter();
+		Cookie[] cookies = request.getCookies();
+		Cookie currentCookie = null;
+		int currentSessionId = 0;
+		SessionInfo currentInfo = null;
+		boolean LoggedOut = false;
+		String action = request.getParameter("function");
+		boolean find = false;
+		if (cookies != null) {
+			for (Cookie temp : cookies){
+				String name = temp.getName();
+				if (name.equals(cookieName)) {
+					currentCookie = temp;
+					currentSessionId = CookieHandler.getSessionId(currentCookie.getValue());
+					if (map.containsKey(currentSessionId) && map.get(currentSessionId).getExpriationTime().after(new Date())) {
+						find = true;
+						currentInfo = map.get(currentSessionId);
+						if (action == null) {
+							currentInfo.increaseVersion();
+							currentInfo.setExpirationTime();
+							currentCookie.setValue(CookieHandler.creatCookieData(currentSessionId, currentInfo));
+						}
+					}
+				}
+			}
+		}
+		if (cookies == null || !find) {
+			currentInfo = new SessionInfo(0);
+			currentSessionId = ++sessionId;
+			String cookieValue = CookieHandler.creatCookieData(currentSessionId, currentInfo);
+			currentCookie = new Cookie(cookieName, cookieValue);
+		}
+		
+		if (action != null && find) {
+			if (action.equals("Logout")) {
+				currentCookie.setMaxAge(0);
+				response.addCookie(currentCookie);
+				map.remove(currentSessionId);
+				LoggedOut = true;
+			}else {
+				if(action.equals("Replace")) {
+					currentInfo.setMessage(request.getParameter("newMessage"));
+				}
+				currentInfo.increaseVersion();
+				currentInfo.setExpirationTime();
+				currentCookie.setValue(CookieHandler.creatCookieData(currentSessionId, currentInfo));	
+			}
+		}
+		if (!LoggedOut) {
+			currentCookie.setMaxAge((int) sessionExpireTime);
+			response.addCookie(currentCookie);
+			map.put(currentSessionId, currentInfo);
+			writer.println("<!DOCTYPE html>" +
+					"<html><head></head><body>" +
+					"NetId: ts679 &nbsp;&nbsp;&nbsp;" + 
+					"Session:0_" + currentSessionId + 
+					"&nbsp;&nbsp;&nbsp;" + 
+					"Version:" + currentInfo.getVersion() + "&nbsp;&nbsp;&nbsp;" + "Date:" + new Date().toString() +
+					"<h1>" + currentInfo.getMessage() + "</h1>" +
+					"<form method=\"post\">" +
+					"<input type=\"submit\" name=\"function\" value=\"Replace\" />" +
+					"<input type=\"text\" maxlength=\"256\" name=\"newMessage\" />" +
+					"<br /><br />" +
+					"<input type=\"submit\" name=\"function\" value=\"Refresh\" />" +
+					"<br /><br />" + 
+					"<input type=\"submit\" name=\"function\" value=\"Logout\" />" + 
+					"<br /><br />" + 
+					"</form>" + 
+					"<br /><br />" +
+					"Cookie:0_" + currentCookie.getValue().toString() + 
+					"&nbsp;&nbsp;&nbsp;" + 
+					"Expires:" + currentInfo.getExpriationTime().toString() + 
+					"</body></html>");
+		}else{
+			writer.println("<!DOCTYPE html>" +
+					"<html><head></head><body>" +
+					"<h1>" + "You have been logged out." + "</h1>" +
+					"</body></html>");
+		}
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		doGet(request, response);
+	}
+}

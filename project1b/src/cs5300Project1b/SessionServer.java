@@ -25,10 +25,11 @@ public class SessionServer extends HttpServlet {
 	
 	private static ConcurrentHashMap<String, mySession> sessionTable = new ConcurrentHashMap<>();
 	private SimpleDBView sdbView;
-	private int sessNum = 1;
+	private Integer sessNum = 1;
 	private RPCServer rpcServer;
 	private RPCClient rpcClient;
 	private String IPAddr = Constant.defaultIPAddr;
+	private int svrID = -1;
     /**
      * @see HttpServlet#HttpServlet()
      */
@@ -54,6 +55,33 @@ public class SessionServer extends HttpServlet {
 		// TODO Auto-generated method stub
 		Cookie curCookie = null;
 		Cookie[] cookies = request.getCookies();
+		
+		if(cookies!=null ){
+			for(Cookie cookie : cookies){
+				if(cookie.getName().equals(Constant.cookieName)){
+					curCookie = cookie;
+					break;
+				}
+			}
+		}
+		
+		if(curCookie==null){
+			SessionID sid  = null;
+			synchronized(sessNum){
+				sid = new SessionID(svrID, sessNum);
+				sessNum++;
+			}
+			
+		}
+		else{
+			String[] token = curCookie.getValue().split("__");
+			int svrID = Integer.parseInt(token[0]);
+			String primaryIP = token[2];
+			String backupIP = token[3];
+			SessionID sid = new SessionID(svrID,sessNum);
+					
+		}
+		
 		String action = request.getParameter("function");
 		
 		Date newDate = new Date();
@@ -67,44 +95,7 @@ public class SessionServer extends HttpServlet {
 			replace =true;	
 		}
 		
-		if(cookies!=null ){
-			for(Cookie cookie : cookies){
-				if(cookie.getName().equals(Constant.cookieName)){
-					curCookie = cookie;
-					break;
-				}
-			}
-		}
 		
-		//update a existng session
-//		if(curCookie!=null && sessionTable.containsKey(getSid(curCookie))){
-//			String sid = getSid(curCookie);
-//			int version = getV(curCookie);
-//			version++;
-//			
-//			curCookie.setValue(createCookieValue(sid,version));
-//			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
-//			mySession session = sessionTable.get(sid);
-//			if(replace){
-//				String msg = request.getParameter("newStr");
-//				session.setMessage(msg);
-//			}
-//			session.addVersion();
-//			session.setExpireTime(new Date(newDate.getTime()+30*ONE_SECOND_IN_MILLIS));
-//			sessionTable.put(sid, session);
-//			request.setAttribute("mySession", session);
-//		}
-			
-		//Create a new session - first time or current session is timed-out
-//		else{
-//			curCookie = new Cookie(cookieName, createCookieValue(sessionID,0));
-//			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
-//			mySession session = new mySession(sessionID,0,new Date(newDate.getTime()+30*ONE_SECOND_IN_MILLIS));	
-//			session.setMessage(welcomeMsg);
-//			sessionTable.put(sessionID, session);
-//			sessionID = UUID.randomUUID().toString();
-//			request.setAttribute("mySession", session);		
-//		}
 
 		response.addCookie(curCookie);
 		request.setAttribute("cookie", curCookie);	
@@ -135,20 +126,8 @@ public class SessionServer extends HttpServlet {
 			}
 		}
 		
-		//remove the session after log out (if that session stil exists)
-//		if(curCookie!=null && sessionTable.containsKey(getSid(curCookie))){
-//			String sid = getSid(curCookie);
-//			int version = getV(curCookie);
-//			version++;
-//	
-//			sessionTable.remove(sid);
-//			curCookie.setValue(createCookieValue(sid,version));
-//			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
-//			response.addCookie(curCookie);
-//				
-//		}
+	
 		
-		request.getRequestDispatcher("logout.jsp").forward(request, response);
 
 		
 	}
@@ -166,8 +145,8 @@ public class SessionServer extends HttpServlet {
 	}
 
 	//create the value for the new cookie using session ID and version number 
-	private String createCookieValue(String sid, int version){
-		return sid+"__"+version+"__0_0";
+	private String createCookieValue(mySession session, String primaryIP, String backupIP){
+		return session.getSessionID().serialize()+ "__" + session.getVersion() + "__" + primaryIP+"__" + backupIP;
 	}
 	//get the session ID given a cookie
 	private String getSid(Cookie cookie){

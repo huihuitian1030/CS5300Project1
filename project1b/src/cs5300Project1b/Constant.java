@@ -1,6 +1,10 @@
 package cs5300Project1b;
 
 public class Constant {
+
+	protected static final String DOMAIN = "p1b";
+	protected static final String ATTRIBUTE = "IPv4";
+	protected static final int N = 10;
 	
 	protected static final String cookieName = "CS5300PROJECT";
 	protected static final int portProj1bRPC = 5300;

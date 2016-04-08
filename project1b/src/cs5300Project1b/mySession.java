@@ -4,21 +4,23 @@ import java.util.Date;
 
 public class mySession {
 	
-	String sessionID;
+	SessionID sessionID;
+	
 	int version;
-	String message;
-	Date expirationTime; // for testing, the live period of a session is set to 30s
+	String message = Constant.welcomeMsg;
+	Date expirationTime; 
 	
-	
-
-	public mySession(String sid, int v, Date expTime){
-		
+	public mySession(SessionID sid, int v, Date expTime){
 		sessionID = sid;
 		version = v;
 		expirationTime = expTime;
 	}
+	
+	public String serialize(){
+		return sessionID.serialize()+"__"+version+"__"+message+"__"+expirationTime.toString();
+	}
 
-	public String getSessionID(){
+	public SessionID getSessionID(){
 		return sessionID;
 	}
 	
@@ -35,7 +37,11 @@ public class mySession {
 	}
 	
 	public void setMessage(String str){
+		if(str.length() > Constant.msgMaxLen){
+			str = str.substring(0,Constant.msgMaxLen);
+		}
 		message = str;
+		
 	}
 	
 	public void setExpireTime(Date newDate){

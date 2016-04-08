@@ -1,9 +1,7 @@
 package cs5300Project1b;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -11,7 +9,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.Cookie;
@@ -25,26 +22,27 @@ import java.util.UUID;
 @WebServlet("/server")
 public class SessionServer extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private static final int ONE_SECOND_IN_MILLIS=1000;
-	private static final String cookieName = "CS5300PROJECT";
-	private static final String welcomeMsg ="Hello User!";
-
-	private static ConcurrentHashMap<String, mySession> sessionMap = new ConcurrentHashMap<>();
-	private String sessionID = UUID.randomUUID().toString();
+	
+	private static ConcurrentHashMap<String, mySession> sessionTable = new ConcurrentHashMap<>();
+	private SimpleDBView sdbView;
+	private int sessNum = 1;
+	private RPCServer rpcServer;
+	private RPCClient rpcClient;
+	private String IPAddr = Constant.defaultIPAddr;
     /**
      * @see HttpServlet#HttpServlet()
      */
     public SessionServer() {
         super();
-        int delay = 0;
-        int period = 120*ONE_SECOND_IN_MILLIS;
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask(){
-        	public void run(){
-        		Date newDate = new Date();
-        		removeExpSession(newDate);
-        	}
-        },delay,period);
+//        int delay = 0;
+//        int period = 120*Constant.ONE_SECOND_IN_MILLIS;
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask(){
+//        	public void run(){
+//        		Date newDate = new Date();
+//        		removeExpSession(newDate);
+//        	}
+//        },delay,period);
         
         // TODO Auto-generated constructor stub
     }
@@ -71,7 +69,7 @@ public class SessionServer extends HttpServlet {
 		
 		if(cookies!=null ){
 			for(Cookie cookie : cookies){
-				if(cookie.getName().equals(cookieName)){
+				if(cookie.getName().equals(Constant.cookieName)){
 					curCookie = cookie;
 					break;
 				}
@@ -79,34 +77,34 @@ public class SessionServer extends HttpServlet {
 		}
 		
 		//update a existng session
-		if(curCookie!=null && sessionMap.containsKey(getSid(curCookie))){
-			String sid = getSid(curCookie);
-			int version = getV(curCookie);
-			version++;
-			
-			curCookie.setValue(createCookieValue(sid,version));
-			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
-			mySession session = sessionMap.get(sid);
-			if(replace){
-				String msg = request.getParameter("newStr");
-				session.setMessage(msg);
-			}
-			session.addVersion();
-			session.setExpireTime(new Date(newDate.getTime()+30*ONE_SECOND_IN_MILLIS));
-			sessionMap.put(sid, session);
-			request.setAttribute("mySession", session);
-		}
+//		if(curCookie!=null && sessionTable.containsKey(getSid(curCookie))){
+//			String sid = getSid(curCookie);
+//			int version = getV(curCookie);
+//			version++;
+//			
+//			curCookie.setValue(createCookieValue(sid,version));
+//			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
+//			mySession session = sessionTable.get(sid);
+//			if(replace){
+//				String msg = request.getParameter("newStr");
+//				session.setMessage(msg);
+//			}
+//			session.addVersion();
+//			session.setExpireTime(new Date(newDate.getTime()+30*ONE_SECOND_IN_MILLIS));
+//			sessionTable.put(sid, session);
+//			request.setAttribute("mySession", session);
+//		}
 			
 		//Create a new session - first time or current session is timed-out
-		else{
-			curCookie = new Cookie(cookieName, createCookieValue(sessionID,0));
-			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
-			mySession session = new mySession(sessionID,0,new Date(newDate.getTime()+30*ONE_SECOND_IN_MILLIS));	
-			session.setMessage(welcomeMsg);
-			sessionMap.put(sessionID, session);
-			sessionID = UUID.randomUUID().toString();
-			request.setAttribute("mySession", session);		
-		}
+//		else{
+//			curCookie = new Cookie(cookieName, createCookieValue(sessionID,0));
+//			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
+//			mySession session = new mySession(sessionID,0,new Date(newDate.getTime()+30*ONE_SECOND_IN_MILLIS));	
+//			session.setMessage(welcomeMsg);
+//			sessionTable.put(sessionID, session);
+//			sessionID = UUID.randomUUID().toString();
+//			request.setAttribute("mySession", session);		
+//		}
 
 		response.addCookie(curCookie);
 		request.setAttribute("cookie", curCookie);	
@@ -130,7 +128,7 @@ public class SessionServer extends HttpServlet {
 		
 		if(cookies!=null ){
 			for(Cookie cookie : cookies){
-				if(cookie.getName().equals(cookieName)){
+				if(cookie.getName().equals(Constant.cookieName)){
 					curCookie = cookie;
 					break;
 				}
@@ -138,17 +136,17 @@ public class SessionServer extends HttpServlet {
 		}
 		
 		//remove the session after log out (if that session stil exists)
-		if(curCookie!=null && sessionMap.containsKey(getSid(curCookie))){
-			String sid = getSid(curCookie);
-			int version = getV(curCookie);
-			version++;
-	
-			sessionMap.remove(sid);
-			curCookie.setValue(createCookieValue(sid,version));
-			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
-			response.addCookie(curCookie);
-				
-		}
+//		if(curCookie!=null && sessionTable.containsKey(getSid(curCookie))){
+//			String sid = getSid(curCookie);
+//			int version = getV(curCookie);
+//			version++;
+//	
+//			sessionTable.remove(sid);
+//			curCookie.setValue(createCookieValue(sid,version));
+//			curCookie.setMaxAge(30*ONE_SECOND_IN_MILLIS);
+//			response.addCookie(curCookie);
+//				
+//		}
 		
 		request.getRequestDispatcher("logout.jsp").forward(request, response);
 
@@ -158,7 +156,7 @@ public class SessionServer extends HttpServlet {
 	//remove the expired sessions from my session table
 	private static void removeExpSession(Date newDate){
 
-		Iterator<Entry<String, mySession>> it = sessionMap.entrySet().iterator();
+		Iterator<Entry<String, mySession>> it = sessionTable.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry<String, mySession> entry = (Map.Entry<String, mySession>) it.next();
 			if(newDate.getTime() > entry.getValue().getExpireTime().getTime()){
@@ -178,6 +176,10 @@ public class SessionServer extends HttpServlet {
 	//get version number given a cookie
 	private int getV(Cookie cookie){
 		return Integer.parseInt(cookie.getValue().split("__")[1]);
+	}
+	
+	public String getAddr(){
+		return this.IPAddr;
 	}
 	
 	

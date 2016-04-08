@@ -15,5 +15,6 @@ public class Constant {
 	protected static final String WRITE = "sessionWrite";
 	protected static final String READ = "sessionRead";
 	protected static final String defaultIPAddr = "0.0.0.0";
+	protected static final int expTime = 30 * 1000;
 
 }

@@ -24,6 +24,10 @@ public class SessionID {
 		return rebootNum;
 	}
 	
+	public void setRebootNum( int rebootNum ) {
+		this.rebootNum = rebootNum;
+	}
+	
 	public int getSessNum(){
 		return sessNum;
 	}

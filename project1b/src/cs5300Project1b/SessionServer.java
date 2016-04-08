@@ -159,7 +159,7 @@ public class SessionServer extends HttpServlet {
 		Iterator<Entry<String, mySession>> it = sessionTable.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry<String, mySession> entry = (Map.Entry<String, mySession>) it.next();
-			if(newDate.getTime() > entry.getValue().getExpireTime().getTime()){
+			if(newDate.getTime() > entry.getValue().getExpireTime()){
 				it.remove();
 			}
 		}
@@ -182,7 +182,23 @@ public class SessionServer extends HttpServlet {
 		return this.IPAddr;
 	}
 	
+	public mySession SessionRead(String sessionId) {
+		if (!sessionTable.containsKey(sessionId)) {
+			return new mySession(new SessionID(-1, 0));
+		} else {
+			mySession ms = sessionTable.get(sessionId);
+			ms.getVersion();
+			ms.setExpireTime();
+			return ms;
+		}
+	}
 	
-	
+	public SessionID SessionWrite(String session) {
+		mySession ms = new mySession(session);
+		SessionID sid = ms.getSessionID();
+		String sessionId = sid.serialize();
+		sessionTable.put(sessionId, ms);
+		return sid;
+	}
 }
 

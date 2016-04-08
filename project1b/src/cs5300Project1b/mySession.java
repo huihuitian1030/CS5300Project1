@@ -4,20 +4,30 @@ import java.util.Date;
 
 public class mySession {
 	
-	SessionID sessionID;
+	private SessionID sessionID;
+	private int version;
+	private String message;
+	private long expirationTime; 
 	
-	int version;
-	String message = Constant.welcomeMsg;
-	Date expirationTime; 
-	
-	public mySession(SessionID sid, int v, Date expTime){
+	public mySession(SessionID sid){
 		sessionID = sid;
-		version = v;
-		expirationTime = expTime;
+		version = 1;
+		message = Constant.welcomeMsg;
+		setExpireTime();
+	}
+	
+	public mySession(String session) {
+		String[] info = session.split("__");
+		assert(info.length == 6); 
+		SessionID sessionID = new SessionID(Integer.parseInt(info[0]), Integer.parseInt(info[2]));
+		sessionID.setRebootNum(Integer.parseInt(info[1]));
+		version = Integer.parseInt(info[3]);
+		message = info[4];
+		expirationTime = Long.parseLong(info[5]);
 	}
 	
 	public String serialize(){
-		return sessionID.serialize()+"__"+version+"__"+message+"__"+expirationTime.toString();
+		return sessionID.serialize() + "__" + version + "__" + message + "__" + String.valueOf(expirationTime);
 	}
 
 	public SessionID getSessionID(){
@@ -44,17 +54,11 @@ public class mySession {
 		
 	}
 	
-	public void setExpireTime(Date newDate){
-		expirationTime = newDate;
+	public void setExpireTime(){
+		expirationTime = new Date().getTime() + Constant.expTime;
 	}
 	
-	public Date getExpireTime(){
+	public long getExpireTime(){
 		return expirationTime;
 	}
-	
-	
-
-	
-
-	
 }

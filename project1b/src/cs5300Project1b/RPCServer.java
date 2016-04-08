@@ -33,21 +33,22 @@ public class RPCServer extends Thread {
 				inBuf = recvPkt.getData();
 				String inMessage = new String(inBuf);
 				String[] messageInfo = inMessage.split("__");
+				assert(messageInfo.length == 3);
 				String callId = messageInfo[0];
 				String operationCode = messageInfo[1];
 				String argument = messageInfo[2];
 				byte[] outBuf = null;
 				switch (operationCode) {
 				case "operationSESSIONREAD":
-					//String session = ssServer.SessionRead(argument);
-					//String rmsg = "" + callId + "__" + session;
-					//outBuf = rmsg.getBytes();
+					mySession session = ssServer.SessionRead(argument);
+					String rmsg = "" + callId + "__" + session.serialize();
+					outBuf = rmsg.getBytes();
 					break;
 					
 				case "operationSESSIONWRITE":
-					//String sid = ssServer.SessionWrite(argument);
-					//String wmsg = "" + callId + "__" + sid;
-					//outBuf = wmsg.getBytes();
+					SessionID sid = ssServer.SessionWrite(argument);
+					String wmsg = "" + callId + "__" + sid.serialize();
+					outBuf = wmsg.getBytes();
 					break;
 				default:
 					throw new IllegalArgumentException("Illegal operationCode");    

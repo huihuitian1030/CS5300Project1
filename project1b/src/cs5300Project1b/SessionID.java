@@ -2,21 +2,35 @@ package cs5300Project1b;
 
 public class SessionID {
 	
-	private int svrID;
+	private String svrID;
 	private int rebootNum;
 	private int sessNum;
 	
-	public SessionID(int svrID,int sessNum){
+	public SessionID(String svrID,int sessNum){
 		this.svrID = svrID;
 		this.rebootNum = 0;
 		this.sessNum = sessNum;
 	}
 	
-	public String serialize(){
-		return ""+svrID+"__"+rebootNum+"__"+sessNum;
+	public SessionID(){
+		this.svrID = "None";
+		this.rebootNum  = 0;
+		this.sessNum  = 0;
 	}
 	
-	public int getSvrID(){
+	public String serialize(){
+		return ""+svrID+"|"+rebootNum+"|"+sessNum;
+	}
+	
+	public SessionID(String s){
+		String[] token = s.split("|");
+		svrID = token[0];
+		rebootNum = Integer.parseInt(token[1]);
+		sessNum = Integer.parseInt(token[2]);
+
+	}
+	
+	public String getSvrID(){
 		return svrID;
 	}
 	

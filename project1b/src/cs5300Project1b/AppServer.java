@@ -1,6 +1,8 @@
 package cs5300Project1b;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -20,20 +22,19 @@ import java.util.UUID;
  * Servlet implementation class server
  */
 @WebServlet("/server")
-public class SessionServer extends HttpServlet {
+public class AppServer extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private static ConcurrentHashMap<String, mySession> sessionTable = new ConcurrentHashMap<>();
 	private SimpleDBView sdbView;
-	private Integer sessNum = 1;
+
 	private RPCServer rpcServer;
 	private RPCClient rpcClient;
 	private String IPAddr = Constant.defaultIPAddr;
-	private int svrID = -1;
+	private String svrID = "None";
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public SessionServer() {
+    public AppServer() {
         super();
 //        int delay = 0;
 //        int period = 120*Constant.ONE_SECOND_IN_MILLIS;
@@ -46,6 +47,10 @@ public class SessionServer extends HttpServlet {
 //        },delay,period);
         
         // TODO Auto-generated constructor stub
+        
+        rpcClient = new RPCClient(this);
+        rpcServer = new RPCServer(this);
+  
     }
 
 	/**
@@ -55,7 +60,15 @@ public class SessionServer extends HttpServlet {
 		// TODO Auto-generated method stub
 		Cookie curCookie = null;
 		Cookie[] cookies = request.getCookies();
+		String action = request.getParameter("function");
 		
+		boolean replace = false;
+		String msg = null;
+		// check whether current action is replace 
+		if(action!=null && action.equals("Replace")){	
+			replace =true;	
+		}
+
 		if(cookies!=null ){
 			for(Cookie cookie : cookies){
 				if(cookie.getName().equals(Constant.cookieName)){
@@ -66,35 +79,36 @@ public class SessionServer extends HttpServlet {
 		}
 		
 		if(curCookie==null){
-			SessionID sid  = null;
-			synchronized(sessNum){
-				sid = new SessionID(svrID, sessNum);
-				sessNum++;
+			SessionID sid = new SessionID();
+			SessionState ss = new SessionState(sid);
+			ArrayList<String> destAddr = new ArrayList<String>();
+			for(int i = 0; i<Constant.W;i++){
+				
 			}
+			DatagramPacket wPkt = rpcClient.SessionWriteClient(ss, destAddr);
+			
 			
 		}
 		else{
 			String[] token = curCookie.getValue().split("__");
-			int svrID = Integer.parseInt(token[0]);
-			String primaryIP = token[2];
-			String backupIP = token[3];
-			SessionID sid = new SessionID(svrID,sessNum);
-					
+			SessionID sid = new SessionID(token[0]);
+			int version = Integer.parseInt(token[1]);
+
+			SessionState ms = new SessionState(sid);
+			
+			ArrayList<String> destAddr = new ArrayList<String>();
+
+			 
+			
+			
 		}
 		
-		String action = request.getParameter("function");
 		
 		Date newDate = new Date();
-		removeExpSession(newDate);
+
 		
-		
-		boolean replace = false;
-		
-		// check whether current action is replace 
-		if(action!=null && action.equals("Replace")){	
-			replace =true;	
-		}
-		
+
+
 		
 
 		response.addCookie(curCookie);
@@ -113,9 +127,6 @@ public class SessionServer extends HttpServlet {
 		Cookie curCookie = null;
 		Cookie[] cookies = request.getCookies();
 		
-		//check session table to remove the expired sessions
-		Date newDate = new Date();
-		removeExpSession(newDate);
 		
 		if(cookies!=null ){
 			for(Cookie cookie : cookies){
@@ -132,21 +143,10 @@ public class SessionServer extends HttpServlet {
 		
 	}
 
-	//remove the expired sessions from my session table
-	private static void removeExpSession(Date newDate){
-
-		Iterator<Entry<String, mySession>> it = sessionTable.entrySet().iterator();
-		while(it.hasNext()){
-			Map.Entry<String, mySession> entry = (Map.Entry<String, mySession>) it.next();
-			if(newDate.getTime() > entry.getValue().getExpireTime()){
-				it.remove();
-			}
-		}
-	}
 
 	//create the value for the new cookie using session ID and version number 
-	private String createCookieValue(mySession session, String primaryIP, String backupIP){
-		return session.getSessionID().serialize()+ "__" + session.getVersion() + "__" + primaryIP+"__" + backupIP;
+	private String createCookieValue(SessionState ms, int primaryID, int secondID){
+		return ms.getSessionID().serialize()+ "_" + ms.getVersion() + "_" + primaryID+"_" + secondID;
 	}
 	//get the session ID given a cookie
 	private String getSid(Cookie cookie){
@@ -161,23 +161,9 @@ public class SessionServer extends HttpServlet {
 		return this.IPAddr;
 	}
 	
-	public mySession SessionRead(String sessionId) {
-		if (!sessionTable.containsKey(sessionId)) {
-			return new mySession(new SessionID(-1, 0));
-		} else {
-			mySession ms = sessionTable.get(sessionId);
-			ms.getVersion();
-			ms.setExpireTime();
-			return ms;
-		}
-	}
-	
-	public SessionID SessionWrite(String session) {
-		mySession ms = new mySession(session);
-		SessionID sid = ms.getSessionID();
-		String sessionId = sid.serialize();
-		sessionTable.put(sessionId, ms);
-		return sid;
+	public String getSvrID(){
+		return this.svrID;
 	}
 }
-
+	
+	

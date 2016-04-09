@@ -11,12 +11,12 @@ import java.util.ArrayList;
 
 public class RPCClient {
 	private Integer callID = 1;
-	SessionServer sessionServer;
-	public RPCClient(SessionServer ss){
-		this.sessionServer = ss ;
+	AppServer appServer;
+	public RPCClient(AppServer as){
+		this.appServer = as ;
 	}
 	
-	public DatagramPacket SessionReadClient(SessionID sid, ArrayList<String> destAddr){
+	public DatagramPacket SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
 		DatagramSocket rpcSocket = null;
 		
 		try{
@@ -33,10 +33,10 @@ public class RPCClient {
 		}
 		
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
-		String callMsg = ""+cid + "__" + Constant.READ + "__" + sid.serialize();
+		String callMsg = ""+cid + "__" + Constant.READ + "__" + sid.serialize()+"--"+version;
 		outBuf = callMsg.getBytes(); 
 		for(String host : destAddr){
-			if(host.equals(sessionServer.getAddr())){
+			if(host.equals(appServer.getAddr())){
 				continue;
 			}
 			InetAddress addr = null;
@@ -70,11 +70,10 @@ public class RPCClient {
 		    }
 		rpcSocket.close();
 		return recvPkt;
-		
 	}
 	
 	
-	public DatagramPacket SessionWriteClient(mySession session, ArrayList<String> destAddr){
+	public DatagramPacket SessionWriteClient(SessionState ss, ArrayList<String> destAddr){
 		DatagramSocket rpcSocket = null;
 		try{
 			rpcSocket = new DatagramSocket();
@@ -89,10 +88,10 @@ public class RPCClient {
 			callID++;
 		}
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
-		String callMsg = ""+ cid+ "__" + Constant.WRITE + "__" + session.serialize();
+		String callMsg = ""+ cid+ "__" + Constant.WRITE + "__" + ss.serialize();
 		outBuf = callMsg.getBytes();
 		for(String host : destAddr){
-			if(host.equals(sessionServer.getAddr())){
+			if(host.equals(appServer.getAddr())){
 				continue;
 			}
 			

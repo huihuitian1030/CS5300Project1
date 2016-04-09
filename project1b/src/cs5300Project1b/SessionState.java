@@ -2,24 +2,35 @@ package cs5300Project1b;
 
 import java.util.Date;
 
-public class mySession {
+public class SessionState {
 	
 	private SessionID sessionID;
 	private int version;
 	private String message;
 	private long expirationTime; 
 	
-	public mySession(SessionID sid){
+	public SessionState(SessionID sid){
 		sessionID = sid;
 		version = 1;
 		message = Constant.welcomeMsg;
 		setExpireTime();
 	}
 	
-	public mySession(String session) {
-		String[] info = session.split("__");
+	public SessionState(SessionID sid, int version){
+		sessionID = sid;
+		this.version = version;
+		setExpireTime();
+	}
+	public SessionState(SessionID sid, int version, String message) {
+		sessionID = sid;
+		this.version = version;
+		this.message = message;
+		setExpireTime();
+	}
+	public SessionState(String session) {
+		String[] info = session.split("|");
 		assert(info.length == 6); 
-		SessionID sessionID = new SessionID(Integer.parseInt(info[0]), Integer.parseInt(info[2]));
+		SessionID sessionID = new SessionID(info[0], Integer.parseInt(info[2]));
 		sessionID.setRebootNum(Integer.parseInt(info[1]));
 		version = Integer.parseInt(info[3]);
 		message = info[4];
@@ -27,7 +38,7 @@ public class mySession {
 	}
 	
 	public String serialize(){
-		return sessionID.serialize() + "__" + version + "__" + message + "__" + String.valueOf(expirationTime);
+		return sessionID.serialize() + "|" + version + "|" + message + "|" + String.valueOf(expirationTime);
 	}
 
 	public SessionID getSessionID(){

@@ -65,6 +65,13 @@ public class AppServer extends HttpServlet {
 			SessionState ss = new SessionState(sid);
 
 			String wStr = rpcClient.SessionWriteClient(ss);
+			String[] reply_data = wStr.trim().split("\\__");
+			SessionID sid2 = new SessionID(reply_data[2]);
+			String primaryID = reply_data[0];
+			String secondID = reply_data[1];
+			SessionState ss2 = new SessionState(sid2,0,msg);
+			request.setAttribute("SessionState", ss2);	
+			curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
 			
 			
 		}

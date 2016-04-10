@@ -23,7 +23,7 @@ public class CleanUp extends Thread{
 				}
 			}
 			try{
-				Thread.sleep(15*1000);
+				Thread.sleep(Constant.cleanUpTime);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

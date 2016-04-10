@@ -105,7 +105,14 @@ public class AppServer extends HttpServlet {
 			
 			// write
 			if(replace){
-				newCookie = AppServerWrite(sid, version, msg, request);
+				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
+				if(rStr.equals("Failure")){
+					SessionID sid2 = new SessionID();
+					//TODO : current msg or default?
+					newCookie = AppServerWrite(sid2,0,msg,request);	
+				}else{
+					newCookie = AppServerWrite(sid, version, Constant.welcomeMsg, request);
+				}
 			}
 			//read
 			else{

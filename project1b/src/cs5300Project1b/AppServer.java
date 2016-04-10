@@ -1,15 +1,7 @@
 package cs5300Project1b;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,7 +9,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.UUID;
+
 /**
  * Servlet implementation class server
  */
@@ -36,17 +28,6 @@ public class AppServer extends HttpServlet {
      */
     public AppServer() {
         super();
-//        int delay = 0;
-//        int period = 120*Constant.ONE_SECOND_IN_MILLIS;
-//        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask(){
-//        	public void run(){
-//        		Date newDate = new Date();
-//        		removeExpSession(newDate);
-//        	}
-//        },delay,period);
-        
-        // TODO Auto-generated constructor stub
         
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
@@ -67,6 +48,7 @@ public class AppServer extends HttpServlet {
 		// check whether current action is replace 
 		if(action!=null && action.equals("Replace")){	
 			replace =true;	
+			msg = request.getParameter("newStr");
 		}
 
 		if(cookies!=null ){
@@ -77,39 +59,62 @@ public class AppServer extends HttpServlet {
 				}
 			}
 		}
-		
+		// cookie is null
 		if(curCookie==null){
 			SessionID sid = new SessionID();
 			SessionState ss = new SessionState(sid);
-			ArrayList<String> destAddr = new ArrayList<String>();
-			for(int i = 0; i<Constant.W;i++){
-				
-			}
-			DatagramPacket wPkt = rpcClient.SessionWriteClient(ss, destAddr);
+
+			String wStr = rpcClient.SessionWriteClient(ss);
 			
 			
 		}
+		
+		//cookie is not null
 		else{
 			String[] token = curCookie.getValue().split("__");
+			String primaryID = token[2];
+			String secondID = token[3];
 			SessionID sid = new SessionID(token[0]);
 			int version = Integer.parseInt(token[1]);
-
-			SessionState ms = new SessionState(sid);
 			
-			ArrayList<String> destAddr = new ArrayList<String>();
-
-			 
+			// write
+			if(replace){
+				SessionState ss = new SessionState(sid,version,msg);
+				String wStr = rpcClient.SessionWriteClient(ss);
+				String[] reply_data = wStr.trim().split("\\__");
+				SessionID sid2 = new SessionID(reply_data[2]);
+				primaryID = reply_data[0];
+				secondID = reply_data[1];
+				SessionState ss2 = new SessionState(sid2,version+1,msg);
+				request.setAttribute("SessionState", ss2);	
+				curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
+			}
+			//read
+			else{
+				ArrayList<String> destAddr = new ArrayList<String>();
+				//TODO not id, need to change to ip address
+				destAddr.add(primaryID);
+				destAddr.add(secondID);
+				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
+				String[] reply_data = rStr.trim().split("\\__");
+				if(reply_data.length == 3){
+					SessionID sid2 = new SessionID(reply_data[2]);
+					primaryID = reply_data[0];
+					secondID = reply_data[1];
+					SessionState ss2 = new SessionState(sid2,version+1,msg);
+					request.setAttribute("SessionState", ss2);	
+					curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
+				}else{
+					SessionState ss2 = new SessionState(reply_data[0]);
+					request.setAttribute("SessionState", ss2);	
+					curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
+				}
+				
+				
+			}
 			
 			
 		}
-		
-		
-		Date newDate = new Date();
-
-		
-
-
-		
 
 		response.addCookie(curCookie);
 		request.setAttribute("cookie", curCookie);	
@@ -137,25 +142,21 @@ public class AppServer extends HttpServlet {
 			}
 		}
 		
-	
+		if(curCookie != null){
+			curCookie.setMaxAge(0);
+			response.addCookie(curCookie);
+		}
 		
-
+		request.getRequestDispatcher("logout.jsp").forward(request, response);
 		
 	}
 
 
 	//create the value for the new cookie using session ID and version number 
-	private String createCookieValue(SessionState ms, int primaryID, int secondID){
-		return ms.getSessionID().serialize()+ "_" + ms.getVersion() + "_" + primaryID+"_" + secondID;
+	private String createCookieValue(SessionState ss, String primaryID, String secondID){
+		return ss.getSessionID().serialize()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
 	}
-	//get the session ID given a cookie
-	private String getSid(Cookie cookie){
-		return  cookie.getValue().split("__")[0];	
-	}
-	//get version number given a cookie
-	private int getV(Cookie cookie){
-		return Integer.parseInt(cookie.getValue().split("__")[1]);
-	}
+
 	
 	public String getAddr(){
 		return this.IPAddr;

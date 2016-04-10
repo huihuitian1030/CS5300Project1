@@ -23,7 +23,7 @@ public class SessionID {
 	}
 	
 	public SessionID(String s){
-		String[] token = s.split("|");
+		String[] token = s.split("\\|");
 		svrID = token[0];
 		rebootNum = Integer.parseInt(token[1]);
 		sessNum = Integer.parseInt(token[2]);

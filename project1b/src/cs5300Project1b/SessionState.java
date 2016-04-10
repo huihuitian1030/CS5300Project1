@@ -28,7 +28,7 @@ public class SessionState {
 		setExpireTime();
 	}
 	public SessionState(String session) {
-		String[] info = session.split("|");
+		String[] info = session.split("\\|");
 		assert(info.length == 6); 
 		SessionID sessionID = new SessionID(info[0], Integer.parseInt(info[2]));
 		sessionID.setRebootNum(Integer.parseInt(info[1]));

@@ -4,21 +4,24 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.SocketException; 
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RPCServer extends Thread {
-	private Integer sessNum = 1;
+	private static Integer sessNum = 1;
 	private String svrID;
-	private static ConcurrentHashMap<String, SessionState> sessionTable;
-	
+	private ConcurrentHashMap<String, SessionState> sessionTable;
+	private Thread clean = new CleanUp(sessionTable);
+
 	public RPCServer (AppServer appServer) {
-		this.svrID = appServer.getSrvID();
+		this.svrID = appServer.getSvrID();
 		sessionTable = new ConcurrentHashMap<String, SessionState>();
+		clean.start();
 	}
 	
 	@Override
 	public void run() {
+		
 		DatagramSocket rpcSocket =  null;
 		try {
 			rpcSocket = new DatagramSocket(Constant.portProj1bRPC);
@@ -35,7 +38,7 @@ public class RPCServer extends Thread {
 				int returnPort = recvPkt.getPort();
 				inBuf = recvPkt.getData();
 				String inMessage = new String(inBuf);
-				String[] messageInfo = inMessage.split("__");
+				String[] messageInfo = inMessage.split("\\__");
 				assert(messageInfo.length == 3);
 				String callId = messageInfo[0];
 				String operationCode = messageInfo[1];
@@ -50,7 +53,7 @@ public class RPCServer extends Thread {
 					
 				case Constant.WRITE:
 					SessionID sid = SessionWrite(argument);
-					String wmsg = "" + callId + "__" + sid.serialize();
+					String wmsg = "" + callId + "__" + sid.serialize()+"__"+this.svrID;
 					outBuf = wmsg.getBytes();
 					break;
 				default:
@@ -88,7 +91,9 @@ public class RPCServer extends Thread {
 		String key;
 		if (givenSS.getSessionID().getSvrID().equals("None")) {
 			currentID = new SessionID(this.svrID, sessNum);
-			sessNum++;
+			synchronized(sessNum) {
+				sessNum++;
+			}
 			currentSS = new SessionState(currentID, givenSS.getVersion(), givenSS.getMessage());
 		}else{
 			currentID = givenSS.getSessionID();

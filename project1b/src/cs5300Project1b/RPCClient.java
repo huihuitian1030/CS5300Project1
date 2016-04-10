@@ -16,9 +16,9 @@ public class RPCClient {
 		this.appServer = as ;
 	}
 	
-	public DatagramPacket SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
+	public String SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
 		DatagramSocket rpcSocket = null;
-		
+		String recvStr = "";
 		try{
 			rpcSocket = new DatagramSocket();
 			rpcSocket.setSoTimeout(10000);
@@ -62,18 +62,36 @@ public class RPCClient {
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.split("\\__");
 		        recvCallID = new Integer(token[0]);
+		        if(recvCallID == cid){
+		        	recvStr = token[1];
+		        }
 		        } while(recvCallID != cid);
 			} catch(SocketTimeoutException stoe) {
 				recvPkt = null;
 			} catch(IOException ioe) {
 				ioe.printStackTrace();
 		    }
+		
+		if(recvPkt == null){
+			SessionID newSid = new SessionID();
+			SessionState ss = new SessionState(newSid);
+			recvStr = SessionWriteClient(ss);
+		}
+		
 		rpcSocket.close();
-		return recvPkt;
+		
+		return recvStr;
 	}
 	
 	
-	public DatagramPacket SessionWriteClient(SessionState ss, ArrayList<String> destAddr){
+	public String SessionWriteClient(SessionState ss){
+		ArrayList<String> destAddr = new ArrayList<String>();
+		for(int i = 0; i<Constant.W;i++){
+			//TODO: change the ip address
+			String curIP = Constant.defaultIPAddr;
+			destAddr.add(curIP);
+		}
+		
 		DatagramSocket rpcSocket = null;
 		try{
 			rpcSocket = new DatagramSocket();
@@ -109,6 +127,9 @@ public class RPCClient {
 				e.printStackTrace();
 			}
 		}
+		ArrayList<String> replyList = new ArrayList<String>();
+		String recvSvrID = "";
+		String recvSsID = "";
 		byte[] inBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		Integer recvCallID = -1;
@@ -119,15 +140,23 @@ public class RPCClient {
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.split("\\__");
 		        recvCallID = new Integer(token[0]);
-		        } while(recvCallID != cid);
+		        if(recvCallID == cid){
+		        	replyList.add(replyMsg);
+		        	recvSvrID = recvSvrID + token[2] + "__"; 
+		        	recvSsID = token[1];
+		        }
+		        } while(replyList.size() < Constant.WQ);
 			} catch(SocketTimeoutException stoe) {
 				recvPkt = null;
 			} catch(IOException ioe) {
 				ioe.printStackTrace();
 		    }
+	
+		String recvStr = recvSvrID + recvSsID;
+		
 		
 		rpcSocket.close();
-		return recvPkt;
+		return recvStr;
 	}
 
 }

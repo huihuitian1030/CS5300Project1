@@ -16,7 +16,7 @@
 <% 
 	PrintWriter output =  response.getWriter();
 	Date newDate = new Date();
-    mySession newSession = (mySession) request.getAttribute("mySession");
+    SessionState newSession = (SessionState) request.getAttribute("SessionState");
 	Cookie curCookie = (Cookie) request.getAttribute("cookie");
     
 %>

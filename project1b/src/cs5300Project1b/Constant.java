@@ -9,6 +9,8 @@ public class Constant {
 	protected static final String cookieName = "CS5300PROJECT";
 	protected static final int portProj1bRPC = 5300;
 	protected static final int W = 3;
+	protected static final int WQ = 2;
+	protected static final int R = 2;
 	protected static final int UDP_PACKET_LENGTH = 512;
 	protected static final int ONE_SECOND_IN_MILLIS=1000;
 	protected static int msgMaxLen = 512 - 4 * 8 - 32 - 6;

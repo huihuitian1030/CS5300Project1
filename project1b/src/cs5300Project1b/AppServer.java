@@ -1,14 +1,19 @@
 package cs5300Project1b;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-
+import java.util.HashMap;
+import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+//import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 /**
  * Servlet implementation class server
@@ -23,12 +28,28 @@ public class AppServer extends HttpServlet {
 	private RPCClient rpcClient;
 	private String IPAddr = Constant.defaultIPAddr;
 	private String svrID = "None";
+	private int rebootNum = 0;
+	private HashMap<String, String> idIPmap;
     /**
+     * @throws IOException 
      * @see HttpServlet#HttpServlet()
      */
-    public AppServer() {
+    public AppServer() throws IOException {
         super();
-        
+        BufferedReader br = new BufferedReader(new FileReader("local-ipv4"));
+        this.IPAddr = br.readLine();
+        br = new BufferedReader(new FileReader("ami-launch-index"));
+        this.svrID = br.readLine();
+        br = new BufferedReader(new FileReader("reboot-num"));
+        this.rebootNum = Integer.parseInt(br.readLine());
+        br = new BufferedReader(new FileReader("db-data"));
+        String map = br.readLine();
+        String[] nodes = map.split("\\;");
+        for(String node : nodes){
+        	String id = node.split(" ")[0];
+        	String ip = node.split(" ")[1];
+        	idIPmap.put(id, ip);
+        }
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
   
@@ -63,8 +84,8 @@ public class AppServer extends HttpServlet {
 		if(curCookie==null){
 			SessionID sid = new SessionID();
 			SessionState ss = new SessionState(sid);
-
-			String wStr = rpcClient.SessionWriteClient(ss);
+			ArrayList<String> destAddr = genWQRandomAddrs();
+			String wStr = rpcClient.SessionWriteClient(ss,destAddr);
 			String[] reply_data = wStr.trim().split("\\__");
 			SessionID sid2 = new SessionID(reply_data[2]);
 			String primaryID = reply_data[0];
@@ -72,7 +93,6 @@ public class AppServer extends HttpServlet {
 			SessionState ss2 = new SessionState(sid2,0,msg);
 			request.setAttribute("SessionState", ss2);	
 			curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
-			
 			
 		}
 		
@@ -87,7 +107,8 @@ public class AppServer extends HttpServlet {
 			// write
 			if(replace){
 				SessionState ss = new SessionState(sid,version,msg);
-				String wStr = rpcClient.SessionWriteClient(ss);
+				ArrayList<String> destAddr = genWQRandomAddrs();
+				String wStr = rpcClient.SessionWriteClient(ss,destAddr);
 				String[] reply_data = wStr.trim().split("\\__");
 				SessionID sid2 = new SessionID(reply_data[2]);
 				primaryID = reply_data[0];
@@ -95,34 +116,35 @@ public class AppServer extends HttpServlet {
 				SessionState ss2 = new SessionState(sid2,version+1,msg);
 				request.setAttribute("SessionState", ss2);	
 				curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
+
 			}
 			//read
 			else{
 				ArrayList<String> destAddr = new ArrayList<String>();
 				//TODO not id, need to change to ip address
-				destAddr.add(primaryID);
-				destAddr.add(secondID);
+				destAddr.add(idIPmap.get(primaryID));
+				destAddr.add(idIPmap.get(secondID));
 				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
-				String[] reply_data = rStr.trim().split("\\__");
-				if(reply_data.length == 3){
-					SessionID sid2 = new SessionID(reply_data[2]);
-					primaryID = reply_data[0];
-					secondID = reply_data[1];
-					SessionState ss2 = new SessionState(sid2,version+1,msg);
-					request.setAttribute("SessionState", ss2);	
-					curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
-				}else{
-					SessionState ss2 = new SessionState(reply_data[0]);
-					request.setAttribute("SessionState", ss2);	
-					curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
+				
+				if(rStr.equals("Failure")){
+					SessionID sid2 = new SessionID();
+					SessionState ss = new SessionState(sid2);
+					ArrayList<String> newDestAddr = genWQRandomAddrs();
+					rStr = rpcClient.SessionWriteClient(ss, newDestAddr);
+					
 				}
-				
-				
-			}
-			
-			
-		}
+				String[] reply_data = rStr.trim().split("\\__");
+				SessionID sid2 = new SessionID(reply_data[2]);
+				primaryID = reply_data[0];
+				secondID = reply_data[1];
+				SessionState ss2 = new SessionState(sid2,version+1,msg);
+				request.setAttribute("SessionState", ss2);	
+				curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
 
+			}
+					
+		}
+		curCookie.setMaxAge(Constant.expTime);
 		response.addCookie(curCookie);
 		request.setAttribute("cookie", curCookie);	
 		request.getRequestDispatcher("main.jsp").forward(request, response);
@@ -163,7 +185,10 @@ public class AppServer extends HttpServlet {
 	private String createCookieValue(SessionState ss, String primaryID, String secondID){
 		return ss.getSessionID().serialize()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
 	}
-
+	
+	private int getRebootNum(){
+		return this.rebootNum;
+	}
 	
 	public String getAddr(){
 		return this.IPAddr;
@@ -171,6 +196,19 @@ public class AppServer extends HttpServlet {
 	
 	public String getSvrID(){
 		return this.svrID;
+	}
+	
+	public ArrayList<String> genWQRandomAddrs(){
+		ArrayList<Integer> list = new ArrayList<Integer>();
+		for(int i =0;i<Constant.N;i++){
+			list.add(i);
+		}
+		Collections.shuffle(list);
+		ArrayList<String> destAddr = new ArrayList<String>();
+		for(int i = 0;i<Constant.WQ;i++){
+			destAddr.add(idIPmap.get(String.valueOf(list.get(i))));
+		}
+		return destAddr;
 	}
 }
 	

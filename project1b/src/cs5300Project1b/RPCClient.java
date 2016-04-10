@@ -73,9 +73,7 @@ public class RPCClient {
 		    }
 		
 		if(recvPkt == null){
-			SessionID newSid = new SessionID();
-			SessionState ss = new SessionState(newSid);
-			recvStr = SessionWriteClient(ss);
+			recvStr = "Failure";
 		}
 		
 		rpcSocket.close();
@@ -84,13 +82,7 @@ public class RPCClient {
 	}
 	
 	
-	public String SessionWriteClient(SessionState ss){
-		ArrayList<String> destAddr = new ArrayList<String>();
-		for(int i = 0; i<Constant.W;i++){
-			//TODO: change the ip address
-			String curIP = Constant.defaultIPAddr;
-			destAddr.add(curIP);
-		}
+	public String SessionWriteClient(SessionState ss, ArrayList<String> destAddr){
 		
 		DatagramSocket rpcSocket = null;
 		try{

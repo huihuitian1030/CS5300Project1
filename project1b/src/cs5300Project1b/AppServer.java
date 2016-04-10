@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 public class AppServer extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private SimpleDBView sdbView;
+	//private SimpleDBView sdbView;
 
 	private RPCServer rpcServer;
 	private RPCClient rpcClient;
@@ -38,18 +38,23 @@ public class AppServer extends HttpServlet {
         super();
         BufferedReader br = new BufferedReader(new FileReader("local-ipv4"));
         this.IPAddr = br.readLine();
+        br.close();
         br = new BufferedReader(new FileReader("ami-launch-index"));
         this.svrID = br.readLine();
+        br.close();
         br = new BufferedReader(new FileReader("reboot-num"));
         this.rebootNum = Integer.parseInt(br.readLine());
+        br.close();
         br = new BufferedReader(new FileReader("db-data"));
         String map = br.readLine();
         String[] nodes = map.split("\\;");
-        for(String node : nodes){
+        for(int r = 0 ; r < nodes.length -1 ;r++){
+        	String node = nodes[r];
         	String id = node.split(" ")[0];
         	String ip = node.split(" ")[1];
         	idIPmap.put(id, ip);
         }
+        br.close();
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
   
@@ -80,76 +85,37 @@ public class AppServer extends HttpServlet {
 				}
 			}
 		}
+		Cookie newCookie = null;
 		// cookie is null
 		if(curCookie==null){
 			SessionID sid = new SessionID();
-			SessionState ss = new SessionState(sid);
-			ArrayList<String> destAddr = genWQRandomAddrs();
-			String wStr = rpcClient.SessionWriteClient(ss,destAddr);
-			String[] reply_data = wStr.trim().split("\\__");
-			SessionID sid2 = new SessionID(reply_data[2]);
-			String primaryID = reply_data[0];
-			String secondID = reply_data[1];
-			SessionState ss2 = new SessionState(sid2,0,msg);
-			request.setAttribute("SessionState", ss2);	
-			curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
-			
+			newCookie = AppServerWrite(sid,0,Constant.welcomeMsg,request);	
 		}
 		
 		//cookie is not null
 		else{
-			String[] token = curCookie.getValue().split("__");
-			String primaryID = token[2];
-			String secondID = token[3];
+			String[] token = curCookie.getValue().split("_");
 			SessionID sid = new SessionID(token[0]);
 			int version = Integer.parseInt(token[1]);
+			String primaryID = token[2];
+			String secondID = token[3];
+			ArrayList<String> destAddr = new ArrayList<String>();
+			destAddr.add(primaryID);
+			destAddr.add(secondID);
 			
 			// write
 			if(replace){
-				SessionState ss = new SessionState(sid,version,msg);
-				ArrayList<String> destAddr = genWQRandomAddrs();
-				String wStr = rpcClient.SessionWriteClient(ss,destAddr);
-				String[] reply_data = wStr.trim().split("\\__");
-				SessionID sid2 = new SessionID(reply_data[2]);
-				primaryID = reply_data[0];
-				secondID = reply_data[1];
-				SessionState ss2 = new SessionState(sid2,version+1,msg);
-				request.setAttribute("SessionState", ss2);	
-				curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
-
+				newCookie = AppServerWrite(sid, version, msg, request);
 			}
 			//read
 			else{
-				ArrayList<String> destAddr = new ArrayList<String>();
-				//TODO not id, need to change to ip address
-				destAddr.add(idIPmap.get(primaryID));
-				destAddr.add(idIPmap.get(secondID));
-				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
-				
-				if(rStr.equals("Failure")){
-					SessionID sid2 = new SessionID();
-					SessionState ss = new SessionState(sid2);
-					ArrayList<String> newDestAddr = genWQRandomAddrs();
-					rStr = rpcClient.SessionWriteClient(ss, newDestAddr);
-					
-				}
-				String[] reply_data = rStr.trim().split("\\__");
-				SessionID sid2 = new SessionID(reply_data[2]);
-				primaryID = reply_data[0];
-				secondID = reply_data[1];
-				SessionState ss2 = new SessionState(sid2,version+1,msg);
-				request.setAttribute("SessionState", ss2);	
-				curCookie = new Cookie(Constant.cookieName, createCookieValue(ss2,primaryID,secondID));
-
-			}
-					
+				newCookie = AppServerRead(sid,version,destAddr,request);
+			}	
 		}
-		curCookie.setMaxAge(Constant.expTime);
-		response.addCookie(curCookie);
-		request.setAttribute("cookie", curCookie);	
+		newCookie.setMaxAge(Constant.expTime);
+		response.addCookie(newCookie);
+		request.setAttribute("cookie", newCookie);	
 		request.getRequestDispatcher("main.jsp").forward(request, response);
-		
-	
 	}
 
 	/**
@@ -160,7 +126,6 @@ public class AppServer extends HttpServlet {
 		//doGet(request, response);
 		Cookie curCookie = null;
 		Cookie[] cookies = request.getCookies();
-		
 		
 		if(cookies!=null ){
 			for(Cookie cookie : cookies){
@@ -177,16 +142,42 @@ public class AppServer extends HttpServlet {
 		}
 		
 		request.getRequestDispatcher("logout.jsp").forward(request, response);
-		
 	}
-
+	
+	
+	public Cookie AppServerWrite(SessionID sid,int version,String msg,HttpServletRequest request){
+		SessionState ss1 = new SessionState(sid,version,msg);
+		ArrayList<String> destAddr = genWQRandomAddrs();
+		String wStr = rpcClient.SessionWriteClient(ss1,destAddr);
+		String[] reply_data = wStr.trim().split("\\__");
+		SessionID sid2 = new SessionID(reply_data[2]);
+		String primaryID = reply_data[0];
+		String secondID = reply_data[1];
+		SessionState ss2 = new SessionState(sid2,version+1,msg);
+		request.setAttribute("SessionState", ss2);
+		Cookie newCookie = new Cookie(Constant.cookieName,createCookieValue(ss2,primaryID,secondID));
+		return newCookie;
+	}
+	
+	public Cookie AppServerRead(SessionID sid, int version, ArrayList<String> destAddr,HttpServletRequest request){
+		String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
+		
+		if(rStr.equals("Failure")){
+			SessionID sid2 = new SessionID();
+			return AppServerWrite(sid2,0,Constant.welcomeMsg,request);
+		}
+		else{
+			SessionState ss2 = new SessionState(rStr);
+			return AppServerWrite(sid,version,ss2.getMessage(),request);
+		}
+	}
 
 	//create the value for the new cookie using session ID and version number 
 	private String createCookieValue(SessionState ss, String primaryID, String secondID){
 		return ss.getSessionID().serialize()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
 	}
 	
-	private int getRebootNum(){
+	public int getRebootNum(){
 		return this.rebootNum;
 	}
 	

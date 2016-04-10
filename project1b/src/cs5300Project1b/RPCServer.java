@@ -10,11 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RPCServer extends Thread {
 	private static Integer sessNum = 1;
 	private String svrID;
+	private int rebootNum;
 	private ConcurrentHashMap<String, SessionState> sessionTable;
 	private Thread clean = new CleanUp(sessionTable);
 
 	public RPCServer (AppServer appServer) {
 		this.svrID = appServer.getSvrID();
+		this.rebootNum = appServer.getRebootNum();
 		sessionTable = new ConcurrentHashMap<String, SessionState>();
 		clean.start();
 	}
@@ -74,13 +76,10 @@ public class RPCServer extends Thread {
 	
 	public SessionState SessionRead(String key) {
 		if (!sessionTable.containsKey(key)) {
-			return new SessionState(new SessionID("None", 0));
+			return new SessionState(new SessionID("None",this.rebootNum, 0));
 		} else {
 			SessionState ss = sessionTable.get(key);
-			SessionState newSS = new SessionState(ss.getSessionID(), ss.getVersion()+1, ss.getMessage());
-			String newKey = newSS.getSessionID() + "--" + newSS.getVersion();
-			sessionTable.put(newKey, newSS);
-			return newSS;
+			return ss;
 		}
 	}
 	
@@ -90,16 +89,15 @@ public class RPCServer extends Thread {
 		SessionState currentSS;
 		String key;
 		if (givenSS.getSessionID().getSvrID().equals("None")) {
-			currentID = new SessionID(this.svrID, sessNum);
+			currentID = new SessionID(this.svrID, this.rebootNum, sessNum);
 			synchronized(sessNum) {
 				sessNum++;
 			}
-			currentSS = new SessionState(currentID, givenSS.getVersion(), givenSS.getMessage());
 		}else{
 			currentID = givenSS.getSessionID();
-			currentSS = new SessionState(currentID,givenSS.getVersion(), givenSS.getMessage());
-			currentSS.addVersion();
 		}
+		currentSS = new SessionState(currentID,givenSS.getVersion(), givenSS.getMessage());
+		currentSS.addVersion();
 		key = currentID + "--" + currentSS.getVersion();
 		sessionTable.put(key, currentSS);
 		return currentID;

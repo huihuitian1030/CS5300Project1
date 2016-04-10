@@ -11,7 +11,7 @@ public class SessionState {
 	
 	public SessionState(SessionID sid){
 		sessionID = sid;
-		version = 1;
+		version = 0;
 		message = Constant.welcomeMsg;
 		setExpireTime();
 	}
@@ -30,7 +30,7 @@ public class SessionState {
 	public SessionState(String session) {
 		String[] info = session.split("\\|");
 		assert(info.length == 6); 
-		SessionID sessionID = new SessionID(info[0], Integer.parseInt(info[2]));
+		SessionID sessionID = new SessionID(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]));
 		sessionID.setRebootNum(Integer.parseInt(info[1]));
 		version = Integer.parseInt(info[3]);
 		message = info[4];

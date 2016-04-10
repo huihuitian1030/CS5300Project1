@@ -6,9 +6,9 @@ public class SessionID {
 	private int rebootNum;
 	private int sessNum;
 	
-	public SessionID(String svrID,int sessNum){
+	public SessionID(String svrID,int rebootNum, int sessNum){
 		this.svrID = svrID;
-		this.rebootNum = 0;
+		this.rebootNum = rebootNum;
 		this.sessNum = sessNum;
 	}
 	

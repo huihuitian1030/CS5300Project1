@@ -16,20 +16,26 @@
 <% 
 	PrintWriter output =  response.getWriter();
 	Date newDate = new Date();
-    SessionState newSession = (SessionState) request.getAttribute("SessionState");
+    //SessionState newSession = (SessionState) request.getAttribute("SessionState");
 	Cookie curCookie = (Cookie) request.getAttribute("cookie");
     
 %>
 
 <div>
+
+Cookie name: <%= curCookie.getValue() %><br />
+Expiration time 
+</div>
+
+<div>
 NetID : sj645	<br />
-Session: <%= newSession.getSessionID()  %> <br />
-Version: <%= newSession.getVersion() %> <br />
-Date: <%= newDate.toString() %><br />
+Session: <br />
+Version:<br />
+Date: <br />
 </div>
 
 
-<h1><%= newSession.getMessage() %></h1>
+<h1>Hello User</h1>
 <br />
 <form action="server" method="GET">
 <input type="submit" name = "function" value="Replace" /> <input type="text" name="newStr" >
@@ -42,11 +48,7 @@ Date: <%= newDate.toString() %><br />
 </form>
 <br />
 
-<div>
 
-Cookie name: <%= curCookie.getValue() %><br />
-Expiration time <%= newSession.getExpireTime() %>
-</div>
 
 
 

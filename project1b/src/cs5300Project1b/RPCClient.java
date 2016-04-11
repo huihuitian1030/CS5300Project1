@@ -14,6 +14,7 @@ public class RPCClient {
 	AppServer appServer;
 	public RPCClient(AppServer as){
 		this.appServer = as ;
+		//System.out.println(appServer.getAddr() + " "+appServer.getSvrID());
 	}
 	
 	public String SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
@@ -100,7 +101,9 @@ public class RPCClient {
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		String callMsg = ""+ cid+ "__" + Constant.WRITE + "__" + ss.serialize();
 		outBuf = callMsg.getBytes();
+		
 		for(String host : destAddr){
+			System.out.println(host);
 			if(host.equals(appServer.getAddr())){
 				continue;
 			}

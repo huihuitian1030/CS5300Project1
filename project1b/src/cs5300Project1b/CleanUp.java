@@ -13,6 +13,12 @@ public class CleanUp extends Thread{
 	
 	@Override
 	public void run() {
+		try {
+			Thread.sleep(15*1000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		while(true) {
 			Iterator<String> keys = sessionTable.keySet().iterator();
 			Date current = new Date();

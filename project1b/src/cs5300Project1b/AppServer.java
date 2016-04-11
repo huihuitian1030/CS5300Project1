@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -36,27 +37,37 @@ public class AppServer extends HttpServlet {
      */
     public AppServer() throws IOException {
         super();
-        BufferedReader br = new BufferedReader(new FileReader("local-ipv4"));
+        idIPmap = new HashMap<String,String>();
+        //BufferedReader br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/local-ipv4"));
+        BufferedReader br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/local-ipv4"));
         this.IPAddr = br.readLine();
         br.close();
-        br = new BufferedReader(new FileReader("ami-launch-index"));
+        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
+        br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/ami-launch-index"));
         this.svrID = br.readLine();
         br.close();
-        br = new BufferedReader(new FileReader("reboot-num"));
+        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
+        br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/reboot-num"));
         this.rebootNum = Integer.parseInt(br.readLine());
         br.close();
-        br = new BufferedReader(new FileReader("db-data"));
+        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/db-data"));
+        br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/db-data"));
         String map = br.readLine();
         String[] nodes = map.split("\\;");
-        for(int r = 0 ; r < nodes.length -1 ;r++){
+        for(int r = 0 ; r < nodes.length;r++){
         	String node = nodes[r];
-        	String id = node.split(" ")[0];
-        	String ip = node.split(" ")[1];
+        	//System.out.println("ip and ID is " + node );
+        	String id = node.split("\\s+")[1];
+        	String ip = node.split("\\s+")[0];
         	idIPmap.put(id, ip);
+        	//System.out.println("idip map"+ id+" "+ip);
         }
+        
+       
         br.close();
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
+        rpcServer.start();
   
     }
 
@@ -157,6 +168,7 @@ public class AppServer extends HttpServlet {
 		ArrayList<String> destAddr = genWQRandomAddrs();
 		String wStr = rpcClient.SessionWriteClient(ss1,destAddr);
 		String[] reply_data = wStr.trim().split("\\__");
+		assert(reply_data.length == 3);
 		SessionID sid2 = new SessionID(reply_data[2]);
 		String primaryID = reply_data[0];
 		String secondID = reply_data[1];
@@ -184,6 +196,8 @@ public class AppServer extends HttpServlet {
 		return ss.getSessionID().serialize()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
 	}
 	
+
+	
 	public int getRebootNum(){
 		return this.rebootNum;
 	}
@@ -202,6 +216,7 @@ public class AppServer extends HttpServlet {
 			list.add(i);
 		}
 		Collections.shuffle(list);
+
 		ArrayList<String> destAddr = new ArrayList<String>();
 		for(int i = 0;i<Constant.WQ;i++){
 			destAddr.add(idIPmap.get(String.valueOf(list.get(i))));

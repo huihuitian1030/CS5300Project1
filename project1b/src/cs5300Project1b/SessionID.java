@@ -22,6 +22,10 @@ public class SessionID {
 		return ""+svrID+"|"+rebootNum+"|"+sessNum;
 	}
 	
+	public String serializeForCookie(){
+		return ""+svrID+"_" + rebootNum+"_"+sessNum;
+	}
+	
 	public SessionID(String s){
 		String[] token = s.split("\\|");
 		svrID = token[0];

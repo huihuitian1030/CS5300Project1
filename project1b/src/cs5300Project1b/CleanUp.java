@@ -14,18 +14,21 @@ public class CleanUp extends Thread{
 	@Override
 	public void run() {
 		try {
-			Thread.sleep(15*1000);
+			Thread.sleep(Constant.cleanUpTime);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		while(true) {
-			Iterator<String> keys = sessionTable.keySet().iterator();
-			Date current = new Date();
-			while(keys.hasNext()){
-				String key = keys.next();
-				if (sessionTable.get(key).getExpireTime() < current.getTime()) {
-					sessionTable.remove(key);
+			Iterator<String> keys;
+			if(sessionTable.size() > 0){
+				keys = sessionTable.keySet().iterator();
+				Date current = new Date();
+				while(keys.hasNext()){
+					String key = keys.next();
+					if (sessionTable.get(key).getExpireTime() < current.getTime()) {
+						sessionTable.remove(key);
+					}
 				}
 			}
 			try{

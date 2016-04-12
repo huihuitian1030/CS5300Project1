@@ -30,11 +30,12 @@ public class SessionState {
 	public SessionState(String session) {
 		String[] info = session.split("\\|");
 		assert(info.length == 6); 
-		SessionID sessionID = new SessionID(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]));
+		sessionID = new SessionID(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]));
 		sessionID.setRebootNum(Integer.parseInt(info[1]));
 		version = Integer.parseInt(info[3]);
 		message = info[4];
-		expirationTime = Long.parseLong(info[5]);
+		//System.out.println(info[5]);
+		expirationTime = Long.parseLong(info[5].trim());
 	}
 	
 	public String serialize(){

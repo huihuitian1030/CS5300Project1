@@ -18,6 +18,7 @@ public class RPCServer extends Thread {
 		this.svrID = appServer.getSvrID();
 		this.rebootNum = appServer.getRebootNum();
 		sessionTable = new ConcurrentHashMap<String, SessionState>();
+		clean.setDaemon(true);
 		clean.start();
 	}
 	
@@ -27,51 +28,57 @@ public class RPCServer extends Thread {
 		DatagramSocket rpcSocket =  null;
 		try {
 			rpcSocket = new DatagramSocket(Constant.portProj1bRPC);
-		} catch (SocketException e) {
-			e.printStackTrace();
-		}
-		while(true) {
-			byte[] inBuf = new byte[Constant.UDP_PACKET_LENGTH];
-			DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
-			
-			try {
-				rpcSocket.receive(recvPkt);
-				InetAddress returnAddr = recvPkt.getAddress();
-				int returnPort = recvPkt.getPort();
-				inBuf = recvPkt.getData();
-				String inMessage = new String(inBuf);
-				String[] messageInfo = inMessage.split("\\__");
-				assert(messageInfo.length == 3);
-				String callId = messageInfo[0];
-				String operationCode = messageInfo[1];
-				String argument = messageInfo[2];
-				byte[] outBuf = null;
-				switch (operationCode) {
-				case Constant.READ:
-					SessionState session = SessionRead(argument);
-					String rmsg = "" + callId + "__" + session.serialize();
-					outBuf = rmsg.getBytes();
-					break;
+			while(true) {
+				byte[] inBuf = new byte[Constant.UDP_PACKET_LENGTH];
+				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
+				
+				try {
+					rpcSocket.receive(recvPkt);
+					InetAddress returnAddr = recvPkt.getAddress();
+					int returnPort = recvPkt.getPort();
+					inBuf = recvPkt.getData();
+					String inMessage = new String(inBuf);
+					String[] messageInfo = inMessage.trim().split("\\__");
+					assert(messageInfo.length == 3);
+					String callId = messageInfo[0];
+					String operationCode = messageInfo[1];
+					String argument = messageInfo[2];
+					byte[] outBuf = null;
+					switch (operationCode) {
+					case Constant.READ:
+						SessionState session = SessionRead(argument);
+						String rmsg = "" + callId + "__" + session.serialize();
+						outBuf = rmsg.getBytes();
+						break;
+						
+					case Constant.WRITE:
+						SessionID sid = SessionWrite(argument);
+						String wmsg = "" + callId + "__" + sid.serialize()+"__"+this.svrID;
+						outBuf = wmsg.getBytes();
+						break;
+					default:
+						throw new IllegalArgumentException("Illegal operationCode");    
+					}
 					
-				case Constant.WRITE:
-					SessionID sid = SessionWrite(argument);
-					String wmsg = "" + callId + "__" + sid.serialize()+"__"+this.svrID;
-					outBuf = wmsg.getBytes();
-					break;
-				default:
-					throw new IllegalArgumentException("Illegal operationCode");    
+					DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, returnPort);
+					rpcSocket.send(sendPkt);
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
 				}
 				
-				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, returnPort);
-				rpcSocket.send(sendPkt);
-				rpcSocket.close();
-				
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
 			}
+		
+
+		} catch (SocketException e) {
+			e.printStackTrace();
+		} finally{
+			rpcSocket.close();
+
 		}
+		
 	}
 	
 	public SessionState SessionRead(String key) {
@@ -88,6 +95,8 @@ public class RPCServer extends Thread {
 		SessionID currentID;
 		SessionState currentSS;
 		String key;
+		//System.out.println(sessionState);
+		//System.out.println(givenSS.getSessionID());
 		if (givenSS.getSessionID().getSvrID().equals("None")) {
 			currentID = new SessionID(this.svrID, this.rebootNum, sessNum);
 			synchronized(sessNum) {
@@ -100,6 +109,7 @@ public class RPCServer extends Thread {
 		currentSS.addVersion();
 		key = currentID + "--" + currentSS.getVersion();
 		sessionTable.put(key, currentSS);
+		System.out.println("sessionTable size: "+ sessionTable.size());
 		return currentID;
 	}
 }

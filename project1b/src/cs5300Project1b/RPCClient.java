@@ -13,8 +13,7 @@ public class RPCClient {
 	private Integer callID = 1;
 	AppServer appServer;
 	public RPCClient(AppServer as){
-		this.appServer = as ;
-		//System.out.println(appServer.getAddr() + " "+appServer.getSvrID());
+		this.appServer = as;
 	}
 	
 	public String SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
@@ -49,6 +48,7 @@ public class RPCClient {
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
 				rpcSocket.send(sendPkt);
+				System.out.println("send packet sucess in RPC client read!");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -61,7 +61,7 @@ public class RPCClient {
 				recvPkt.setLength(inBuf.length);
 		        rpcSocket.receive(recvPkt);
 		        String replyMsg = new String(recvPkt.getData());
-		        String[] token = replyMsg.split("\\__");
+		        String[] token = replyMsg.trim().split("\\__");
 		        recvCallID = new Integer(token[0]);
 		        if(recvCallID == cid){
 		        	recvStr = token[1];
@@ -100,10 +100,11 @@ public class RPCClient {
 		}
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		String callMsg = ""+ cid+ "__" + Constant.WRITE + "__" + ss.serialize();
+		System.out.println("send packet to RPC server with msg: "+ callMsg);
+
 		outBuf = callMsg.getBytes();
-		
+	
 		for(String host : destAddr){
-			System.out.println(host);
 			if(host.equals(appServer.getAddr())){
 				continue;
 			}
@@ -118,10 +119,12 @@ public class RPCClient {
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
 				rpcSocket.send(sendPkt);
+				System.out.println("send packet sucess in RPC client write!");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		
 		ArrayList<String> replyList = new ArrayList<String>();
 		String recvSvrID = "";
 		String recvSsID = "";
@@ -133,7 +136,8 @@ public class RPCClient {
 				recvPkt.setLength(inBuf.length);
 		        rpcSocket.receive(recvPkt);
 		        String replyMsg = new String(recvPkt.getData());
-		        String[] token = replyMsg.split("\\__");
+		        System.out.println("reply msg from rpc server for write: "+replyMsg);
+		        String[] token = replyMsg.trim().split("\\__");
 		        recvCallID = new Integer(token[0]);
 		        if(recvCallID == cid){
 		        	replyList.add(replyMsg);
@@ -149,7 +153,7 @@ public class RPCClient {
 	
 		String recvStr = recvSvrID + recvSsID;
 		
-		
+        System.out.println("rpc client send to appserver str: "+recvStr);
 		rpcSocket.close();
 		return recvStr;
 	}

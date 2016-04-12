@@ -3,6 +3,9 @@ package cs5300Project1b;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +70,7 @@ public class AppServer extends HttpServlet {
         br.close();
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
+        rpcServer.setDaemon(true);
         rpcServer.start();
   
     }
@@ -105,11 +109,15 @@ public class AppServer extends HttpServlet {
 		
 		//cookie is not null
 		else{
-			String[] token = curCookie.getValue().split("_");
-			SessionID sid = new SessionID(token[0]);
-			int version = Integer.parseInt(token[1]);
-			String primaryID = token[2];
-			String secondID = token[3];
+			System.out.println("the curCookie value"+curCookie.getValue());
+			
+			String[] token = URLDecoder.decode(curCookie.getValue(),"UTF-8").split("_");
+			
+			SessionID sid = new SessionID(token[0],Integer.parseInt(token[1]),Integer.parseInt(token[2]));
+			System.out.println("the sessionID get from cookie is: "+sid.serialize());
+			int version = Integer.parseInt(token[3]);
+			String primaryID = token[4];
+			String secondID = token[5];
 			ArrayList<String> destAddr = new ArrayList<String>();
 			destAddr.add(primaryID);
 			destAddr.add(secondID);
@@ -131,7 +139,9 @@ public class AppServer extends HttpServlet {
 			}	
 		}
 		newCookie.setMaxAge(Constant.expTime);
+		System.out.println("new Cookie value:" + newCookie.getValue());
 		response.addCookie(newCookie);
+		System.out.println("add cookie ");
 		request.setAttribute("cookie", newCookie);	
 		request.getRequestDispatcher("main.jsp").forward(request, response);
 	}
@@ -163,10 +173,11 @@ public class AppServer extends HttpServlet {
 	}
 	
 	
-	public Cookie AppServerWrite(SessionID sid,int version,String msg,HttpServletRequest request){
+	public Cookie AppServerWrite(SessionID sid,int version,String msg,HttpServletRequest request) throws UnsupportedEncodingException{
 		SessionState ss1 = new SessionState(sid,version,msg);
 		ArrayList<String> destAddr = genWQRandomAddrs();
 		String wStr = rpcClient.SessionWriteClient(ss1,destAddr);
+		//System.out.println(wStr.trim());
 		String[] reply_data = wStr.trim().split("\\__");
 		assert(reply_data.length == 3);
 		SessionID sid2 = new SessionID(reply_data[2]);
@@ -174,11 +185,11 @@ public class AppServer extends HttpServlet {
 		String secondID = reply_data[1];
 		SessionState ss2 = new SessionState(sid2,version+1,msg);
 		request.setAttribute("SessionState", ss2);
-		Cookie newCookie = new Cookie(Constant.cookieName,createCookieValue(ss2,primaryID,secondID));
+		Cookie newCookie = new Cookie(Constant.cookieName,URLEncoder.encode(createCookieValue(ss2,primaryID,secondID),"UTF-8"));
 		return newCookie;
 	}
 	
-	public Cookie AppServerRead(SessionID sid, int version, ArrayList<String> destAddr,HttpServletRequest request){
+	public Cookie AppServerRead(SessionID sid, int version, ArrayList<String> destAddr,HttpServletRequest request) throws UnsupportedEncodingException{
 		String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
 		
 		if(rStr.equals("Failure")){
@@ -193,10 +204,9 @@ public class AppServer extends HttpServlet {
 
 	//create the value for the new cookie using session ID and version number 
 	private String createCookieValue(SessionState ss, String primaryID, String secondID){
-		return ss.getSessionID().serialize()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
+		String value = ""+ss.getSessionID().serializeForCookie()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
+		return value;
 	}
-	
-
 	
 	public int getRebootNum(){
 		return this.rebootNum;
@@ -218,7 +228,7 @@ public class AppServer extends HttpServlet {
 		Collections.shuffle(list);
 
 		ArrayList<String> destAddr = new ArrayList<String>();
-		for(int i = 0;i<Constant.WQ;i++){
+		for(int i = 0;i<Constant.W;i++){
 			destAddr.add(idIPmap.get(String.valueOf(list.get(i))));
 		}
 		return destAddr;

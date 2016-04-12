@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -103,7 +104,7 @@ public class AppServer extends HttpServlet {
 		Cookie newCookie = null;
 		// cookie is null
 		if(curCookie==null){
-			SessionID sid = new SessionID();
+			SessionID sid = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 			newCookie = AppServerWrite(sid,0,Constant.welcomeMsg,request);	
 		}
 		
@@ -119,18 +120,18 @@ public class AppServer extends HttpServlet {
 			String primaryID = token[4];
 			String secondID = token[5];
 			ArrayList<String> destAddr = new ArrayList<String>();
-			destAddr.add(primaryID);
-			destAddr.add(secondID);
+			destAddr.add(idIPmap.get(primaryID));
+			destAddr.add(idIPmap.get(secondID));
 			
 			// write
 			if(replace){
 				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
 				if(rStr.equals("Failure")){
-					SessionID sid2 = new SessionID();
+					SessionID sid2 = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 					//TODO : current msg or default?
 					newCookie = AppServerWrite(sid2,0,msg,request);	
 				}else{
-					newCookie = AppServerWrite(sid, version, Constant.welcomeMsg, request);
+					newCookie = AppServerWrite(sid, version, msg, request);
 				}
 			}
 			//read
@@ -183,7 +184,9 @@ public class AppServer extends HttpServlet {
 		SessionID sid2 = new SessionID(reply_data[2]);
 		String primaryID = reply_data[0];
 		String secondID = reply_data[1];
-		SessionState ss2 = new SessionState(sid2,version+1,msg);
+		version++;
+		//System.out.println("new version is: "+version);
+		SessionState ss2 = new SessionState(sid2,version,msg);
 		request.setAttribute("SessionState", ss2);
 		Cookie newCookie = new Cookie(Constant.cookieName,URLEncoder.encode(createCookieValue(ss2,primaryID,secondID),"UTF-8"));
 		return newCookie;
@@ -191,9 +194,8 @@ public class AppServer extends HttpServlet {
 	
 	public Cookie AppServerRead(SessionID sid, int version, ArrayList<String> destAddr,HttpServletRequest request) throws UnsupportedEncodingException{
 		String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
-		
 		if(rStr.equals("Failure")){
-			SessionID sid2 = new SessionID();
+			SessionID sid2 = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 			return AppServerWrite(sid2,0,Constant.welcomeMsg,request);
 		}
 		else{
@@ -221,15 +223,11 @@ public class AppServer extends HttpServlet {
 	}
 	
 	public ArrayList<String> genWQRandomAddrs(){
-		ArrayList<Integer> list = new ArrayList<Integer>();
-		for(int i =0;i<Constant.N;i++){
-			list.add(i);
-		}
-		Collections.shuffle(list);
+		int[] randomSvrID = new Random().ints(0,Constant.N).distinct().limit(Constant.W).toArray(); 
 
 		ArrayList<String> destAddr = new ArrayList<String>();
 		for(int i = 0;i<Constant.W;i++){
-			destAddr.add(idIPmap.get(String.valueOf(list.get(i))));
+			destAddr.add(idIPmap.get(String.valueOf(randomSvrID[i])));
 		}
 		return destAddr;
 	}

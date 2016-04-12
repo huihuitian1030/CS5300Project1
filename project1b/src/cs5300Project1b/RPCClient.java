@@ -34,6 +34,7 @@ public class RPCClient {
 		
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		String callMsg = ""+cid + "__" + Constant.READ + "__" + sid.serialize()+"--"+version;
+		System.out.println("rpc client send callmsg to rpc server in read: "+ callMsg);
 		outBuf = callMsg.getBytes(); 
 		for(String host : destAddr){
 			if(host.equals(appServer.getAddr())){
@@ -47,6 +48,7 @@ public class RPCClient {
 			}
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
+				//System.out.println(appServer.getSvrID()+ " send pkt to " + host);
 				rpcSocket.send(sendPkt);
 				System.out.println("send packet sucess in RPC client read!");
 			} catch (IOException e) {
@@ -62,6 +64,7 @@ public class RPCClient {
 		        rpcSocket.receive(recvPkt);
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.trim().split("\\__");
+				System.out.println("the reply message from rpc server to rpc client is "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
 		        if(recvCallID == cid){
 		        	recvStr = token[1];
@@ -73,9 +76,10 @@ public class RPCClient {
 				ioe.printStackTrace();
 		    }
 		
-		if(recvPkt == null){
+		if(recvStr.split("\\|")[0].equals("None")){
 			recvStr = "Failure";
 		}
+		
 		
 		rpcSocket.close();
 		
@@ -118,6 +122,7 @@ public class RPCClient {
 			
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
+				System.out.println(appServer.getAddr()+ " send pkt to " + host);
 				rpcSocket.send(sendPkt);
 				System.out.println("send packet sucess in RPC client write!");
 			} catch (IOException e) {

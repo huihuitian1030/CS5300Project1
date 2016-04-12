@@ -12,14 +12,16 @@ public class RPCServer extends Thread {
 	private String svrID;
 	private int rebootNum;
 	private ConcurrentHashMap<String, SessionState> sessionTable;
-	private Thread clean = new CleanUp(sessionTable);
+	private Thread clean;
 
 	public RPCServer (AppServer appServer) {
 		this.svrID = appServer.getSvrID();
 		this.rebootNum = appServer.getRebootNum();
 		sessionTable = new ConcurrentHashMap<String, SessionState>();
+		clean = new CleanUp(sessionTable);
 		clean.setDaemon(true);
 		clean.start();
+		
 	}
 	
 	@Override
@@ -97,14 +99,9 @@ public class RPCServer extends Thread {
 		String key;
 		//System.out.println(sessionState);
 		//System.out.println(givenSS.getSessionID());
-		if (givenSS.getSessionID().getSvrID().equals("None")) {
-			currentID = new SessionID(this.svrID, this.rebootNum, sessNum);
-			synchronized(sessNum) {
-				sessNum++;
-			}
-		}else{
-			currentID = givenSS.getSessionID();
-		}
+		
+		currentID = givenSS.getSessionID();
+		
 		currentSS = new SessionState(currentID,givenSS.getVersion(), givenSS.getMessage());
 		currentSS.addVersion();
 		key = currentID + "--" + currentSS.getVersion();
@@ -112,4 +109,14 @@ public class RPCServer extends Thread {
 		System.out.println("sessionTable size: "+ sessionTable.size());
 		return currentID;
 	}
+	
+	public int getSessionNum(){
+		int res = sessNum;
+		synchronized(sessNum) {
+			sessNum++;
+		}
+		return res;
+	}
+	
+
 }

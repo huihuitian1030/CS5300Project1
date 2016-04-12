@@ -17,6 +17,7 @@ public class RPCClient {
 	}
 	
 	public String SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
+		System.out.println("----------RPC Client Session read-----------");
 		DatagramSocket rpcSocket = null;
 		String recvStr = "";
 		try{
@@ -50,7 +51,6 @@ public class RPCClient {
 			try {
 				//System.out.println(appServer.getSvrID()+ " send pkt to " + host);
 				rpcSocket.send(sendPkt);
-				System.out.println("send packet sucess in RPC client read!");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -64,7 +64,7 @@ public class RPCClient {
 		        rpcSocket.receive(recvPkt);
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.trim().split("\\__");
-				System.out.println("the reply message from rpc server to rpc client is "+ replyMsg);
+				System.out.println("reply msg from rpc server for read: "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
 		        if(recvCallID == cid){
 		        	recvStr = token[1];
@@ -88,7 +88,7 @@ public class RPCClient {
 	
 	
 	public String SessionWriteClient(SessionState ss, ArrayList<String> destAddr){
-		
+		System.out.println("----------RPC Client Session write-----------");
 		DatagramSocket rpcSocket = null;
 		try{
 			rpcSocket = new DatagramSocket();
@@ -104,14 +104,13 @@ public class RPCClient {
 		}
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		String callMsg = ""+ cid+ "__" + Constant.WRITE + "__" + ss.serialize();
-		System.out.println("send packet to RPC server with msg: "+ callMsg);
-
+		System.out.println("rpc client send callmsg to rpc server in write: "+ callMsg);
 		outBuf = callMsg.getBytes();
 	
 		for(String host : destAddr){
-			if(host.equals(appServer.getAddr())){
-				continue;
-			}
+//			if(host.equals(appServer.getAddr())){
+//				continue;
+//			}
 			
 			InetAddress addr = null;
 			try {
@@ -122,9 +121,9 @@ public class RPCClient {
 			
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
-				System.out.println(appServer.getAddr()+ " send pkt to " + host);
+				System.out.println(appServer.getAddr()+ " send pkt to " + addr);
 				rpcSocket.send(sendPkt);
-				System.out.println("send packet sucess in RPC client write!");
+				//System.out.println("send packet sucess in RPC client write!");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

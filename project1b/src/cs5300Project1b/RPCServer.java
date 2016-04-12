@@ -89,6 +89,7 @@ public class RPCServer extends Thread {
 		} else {
 			SessionState ss = sessionTable.get(key);
 			return ss;
+			
 		}
 	}
 	
@@ -104,7 +105,7 @@ public class RPCServer extends Thread {
 		
 		currentSS = new SessionState(currentID,givenSS.getVersion(), givenSS.getMessage());
 		currentSS.addVersion();
-		key = currentID + "--" + currentSS.getVersion();
+		key = currentID.serialize() + "--" + currentSS.getVersion();
 		sessionTable.put(key, currentSS);
 		System.out.println("sessionTable size: "+ sessionTable.size());
 		return currentID;

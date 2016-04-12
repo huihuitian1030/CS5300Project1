@@ -85,6 +85,7 @@ public class RPCServer extends Thread {
 		} else {
 			SessionState ss = sessionTable.get(key);
 			return ss;
+			
 		}
 	}
 	

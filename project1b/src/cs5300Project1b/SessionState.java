@@ -63,11 +63,10 @@ public class SessionState {
 			str = str.substring(0,Constant.msgMaxLen);
 		}
 		message = str;
-		
 	}
 	
 	public void setExpireTime(){
-		expirationTime = new Date().getTime() + Constant.expTime;
+		expirationTime = new Date().getTime() + Constant.expTime + Constant.delta;
 	}
 	
 	public long getExpireTime(){

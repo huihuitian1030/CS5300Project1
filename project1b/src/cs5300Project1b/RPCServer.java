@@ -72,15 +72,11 @@ public class RPCServer extends Thread {
 				}
 				
 			}
-		
-
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} finally{
 			rpcSocket.close();
-
 		}
-		
 	}
 	
 	public SessionState SessionRead(String key) {
@@ -101,11 +97,11 @@ public class RPCServer extends Thread {
 		//System.out.println(givenSS.getSessionID());
 		
 		currentID = givenSS.getSessionID();
-		
 		currentSS = new SessionState(currentID,givenSS.getVersion(), givenSS.getMessage());
 		currentSS.addVersion();
-		key = currentID + "--" + currentSS.getVersion();
+		key = currentID.serialize() + "--" + currentSS.getVersion();
 		sessionTable.put(key, currentSS);
+		System.out.println(key);
 		System.out.println("sessionTable size: "+ sessionTable.size());
 		return currentID;
 	}
@@ -117,6 +113,4 @@ public class RPCServer extends Thread {
 		}
 		return res;
 	}
-	
-
 }

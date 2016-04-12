@@ -37,9 +37,9 @@ public class RPCClient {
 		System.out.println("rpc client send callmsg to rpc server in read: "+ callMsg);
 		outBuf = callMsg.getBytes(); 
 		for(String host : destAddr){
-			if(host.equals(appServer.getAddr())){
-				continue;
-			}
+			//if(host.equals(appServer.getAddr())){
+			//	continue;
+			//}
 			InetAddress addr = null;
 			try {
 				addr = InetAddress.getByName(host);
@@ -58,6 +58,7 @@ public class RPCClient {
 		byte[] inBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		Integer recvCallID = -1;
+		int count = 0;
 		try {
 			do {
 				recvPkt.setLength(inBuf.length);
@@ -66,23 +67,23 @@ public class RPCClient {
 		        String[] token = replyMsg.trim().split("\\__");
 				System.out.println("the reply message from rpc server to rpc client is "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
-		        if(recvCallID == cid){
+		        if(recvCallID == cid && !token[1].split("\\|")[0].equals("None") ){
 		        	recvStr = token[1];
+		        	break;
+		        } else{
+		        	count++;
 		        }
-		        } while(recvCallID != cid);
-			} catch(SocketTimeoutException stoe) {
-				recvPkt = null;
-			} catch(IOException ioe) {
-				ioe.printStackTrace();
-		    }
-		
-		if(recvStr.split("\\|")[0].equals("None")){
-			recvStr = "Failure";
+		    } while(count < Constant.R);
+		} catch(SocketTimeoutException stoe) {
+			recvPkt = null;
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
 		}
 		
-		
+		if(recvStr.length()==0){
+			recvStr = "Failure";
+		}
 		rpcSocket.close();
-		
 		return recvStr;
 	}
 	
@@ -149,12 +150,12 @@ public class RPCClient {
 		        	recvSvrID = recvSvrID + token[2] + "__"; 
 		        	recvSsID = token[1];
 		        }
-		        } while(replyList.size() < Constant.WQ);
-			} catch(SocketTimeoutException stoe) {
-				recvPkt = null;
-			} catch(IOException ioe) {
-				ioe.printStackTrace();
-		    }
+		    } while(replyList.size() < Constant.WQ);
+		} catch(SocketTimeoutException stoe) {
+			recvPkt = null;
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		}
 	
 		String recvStr = recvSvrID + recvSsID;
 		

@@ -42,20 +42,20 @@ public class AppServer extends HttpServlet {
     public AppServer() throws IOException {
         super();
         idIPmap = new HashMap<String,String>();
-        //BufferedReader br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/local-ipv4"));
-        BufferedReader br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/local-ipv4"));
+        BufferedReader br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/local-ipv4"));
+        //BufferedReader br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/local-ipv4"));
         this.IPAddr = br.readLine();
         br.close();
-        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
-        br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/ami-launch-index"));
+        br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
+        //br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/ami-launch-index"));
         this.svrID = br.readLine();
         br.close();
-        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
-        br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/reboot-num"));
+        br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
+        //br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/reboot-num"));
         this.rebootNum = Integer.parseInt(br.readLine());
         br.close();
-        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/db-data"));
-        br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/db-data"));
+        br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/db-data"));
+        //br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/db-data"));
         String map = br.readLine();
         String[] nodes = map.split("\\;");
         for(int r = 0 ; r < nodes.length;r++){
@@ -66,14 +66,11 @@ public class AppServer extends HttpServlet {
         	idIPmap.put(id, ip);
         	//System.out.println("idip map"+ id+" "+ip);
         }
-        
-       
         br.close();
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
         rpcServer.setDaemon(true);
         rpcServer.start();
-  
     }
 
 	/**
@@ -84,7 +81,6 @@ public class AppServer extends HttpServlet {
 		Cookie curCookie = null;
 		Cookie[] cookies = request.getCookies();
 		String action = request.getParameter("function");
-		
 		boolean replace = false;
 		String msg = null;
 		// check whether current action is replace 
@@ -92,7 +88,6 @@ public class AppServer extends HttpServlet {
 			replace =true;	
 			msg = request.getParameter("newStr");
 		}
-
 		if(cookies!=null ){
 			for(Cookie cookie : cookies){
 				if(cookie.getName().equals(Constant.cookieName)){
@@ -117,12 +112,11 @@ public class AppServer extends HttpServlet {
 			SessionID sid = new SessionID(token[0],Integer.parseInt(token[1]),Integer.parseInt(token[2]));
 			System.out.println("the sessionID get from cookie is: "+sid.serialize());
 			int version = Integer.parseInt(token[3]);
-			String primaryID = token[4];
-			String secondID = token[5];
 			ArrayList<String> destAddr = new ArrayList<String>();
-			destAddr.add(idIPmap.get(primaryID));
-			destAddr.add(idIPmap.get(secondID));
-			
+			for (int i = 4; i<token.length; i++) {
+				destAddr.add(idIPmap.get(token[i]));
+			}
+
 			// write
 			if(replace){
 				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
@@ -140,6 +134,7 @@ public class AppServer extends HttpServlet {
 			}	
 		}
 		newCookie.setMaxAge(Constant.expTime);
+		newCookie.setDomain(".ts679.bigdata.systems");
 		System.out.println("new Cookie value:" + newCookie.getValue());
 		response.addCookie(newCookie);
 		System.out.println("add cookie ");
@@ -164,12 +159,10 @@ public class AppServer extends HttpServlet {
 				}
 			}
 		}
-		
 		if(curCookie != null){
 			curCookie.setMaxAge(0);
 			response.addCookie(curCookie);
 		}
-		
 		request.getRequestDispatcher("logout.jsp").forward(request, response);
 	}
 	
@@ -180,15 +173,17 @@ public class AppServer extends HttpServlet {
 		String wStr = rpcClient.SessionWriteClient(ss1,destAddr);
 		//System.out.println(wStr.trim());
 		String[] reply_data = wStr.trim().split("\\__");
-		assert(reply_data.length == 3);
-		SessionID sid2 = new SessionID(reply_data[2]);
-		String primaryID = reply_data[0];
-		String secondID = reply_data[1];
+		assert(reply_data.length == Constant.WQ +1);
+		SessionID sid2 = new SessionID(reply_data[Constant.WQ]);
+		ArrayList<String> svrIDs = new ArrayList<String> ();
+		for (int i = 0; i< Constant.WQ; i++) {
+			svrIDs.add(reply_data[i]);
+		}
 		version++;
 		//System.out.println("new version is: "+version);
 		SessionState ss2 = new SessionState(sid2,version,msg);
 		request.setAttribute("SessionState", ss2);
-		Cookie newCookie = new Cookie(Constant.cookieName,URLEncoder.encode(createCookieValue(ss2,primaryID,secondID),"UTF-8"));
+		Cookie newCookie = new Cookie(Constant.cookieName,URLEncoder.encode(createCookieValue(ss2,svrIDs),"UTF-8"));
 		return newCookie;
 	}
 	
@@ -205,9 +200,16 @@ public class AppServer extends HttpServlet {
 	}
 
 	//create the value for the new cookie using session ID and version number 
-	private String createCookieValue(SessionState ss, String primaryID, String secondID){
-		String value = ""+ss.getSessionID().serializeForCookie()+ "_" + ss.getVersion() + "_" + primaryID+"_" + secondID;
-		return value;
+	private String createCookieValue(SessionState ss, ArrayList<String> svrIDs){
+		StringBuilder sb = new StringBuilder();
+		sb.append(ss.getSessionID().serializeForCookie());
+		sb.append("_");
+		sb.append(ss.getVersion());
+		for (int i = 0; i < svrIDs.size();i++) {
+			sb.append("_");
+			sb.append(svrIDs.get(i));
+		}
+		return sb.toString();
 	}
 	
 	public int getRebootNum(){

@@ -67,20 +67,17 @@ public class RPCClient {
 		        String[] token = replyMsg.trim().split("\\__");
 				System.out.println("reply msg from rpc server for read: "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
-		        if(recvCallID == cid && !token[1].split("\\|")[0].equals("None") ){
+		        if(recvCallID == cid ){
 		        	recvStr = token[1];
-		        	break;
-		        } else{
-		        	count++;
 		        }
-		    } while(count < Constant.R);
+		    } while(recvCallID != cid);
 		} catch(SocketTimeoutException stoe) {
 			recvPkt = null;
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
 		}
 		
-		if(recvStr.length()==0){
+		if(recvStr.split("\\|")[0].equals("None")){
 			recvStr = "Failure";
 		}
 		rpcSocket.close();
@@ -122,7 +119,7 @@ public class RPCClient {
 			
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
-				System.out.println(appServer.getAddr()+ " send pkt to " + addr);
+				System.out.println(appServer.getAddr()+ " send pkt to " + host);
 				rpcSocket.send(sendPkt);
 				//System.out.println("send packet sucess in RPC client write!");
 			} catch (IOException e) {
@@ -152,6 +149,7 @@ public class RPCClient {
 		    } while(replyList.size() < Constant.WQ);
 		} catch(SocketTimeoutException stoe) {
 			recvPkt = null;
+			System.out.println("rpc client receive pkt from rpc server time out");
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
 		}

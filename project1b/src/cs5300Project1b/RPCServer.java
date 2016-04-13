@@ -26,7 +26,7 @@ public class RPCServer extends Thread {
 	
 	@Override
 	public void run() {
-		
+		System.out.println("rpc server start running");
 		DatagramSocket rpcSocket =  null;
 		try {
 			rpcSocket = new DatagramSocket(Constant.portProj1bRPC);
@@ -40,6 +40,7 @@ public class RPCServer extends Thread {
 					int returnPort = recvPkt.getPort();
 					inBuf = recvPkt.getData();
 					String inMessage = new String(inBuf);
+					System.out.println("rpc server receive msg form rpc client: "+ inMessage);
 					String[] messageInfo = inMessage.trim().split("\\__");
 					assert(messageInfo.length == 3);
 					String callId = messageInfo[0];
@@ -48,14 +49,18 @@ public class RPCServer extends Thread {
 					byte[] outBuf = null;
 					switch (operationCode) {
 					case Constant.READ:
+						System.out.println("----------RPC Server Session read-----------");
 						SessionState session = SessionRead(argument);
 						String rmsg = "" + callId + "__" + session.serialize();
+						System.out.println("rpc server send replyMsg to rpc client for read: "+ rmsg);
 						outBuf = rmsg.getBytes();
 						break;
 						
 					case Constant.WRITE:
+						System.out.println("----------RPC Server Session write-----------");
 						SessionID sid = SessionWrite(argument);
 						String wmsg = "" + callId + "__" + sid.serialize()+"__"+this.svrID;
+						System.out.println("rpc server send replyMsg to rpc client for write: "+ wmsg);
 						outBuf = wmsg.getBytes();
 						break;
 					default:
@@ -73,6 +78,7 @@ public class RPCServer extends Thread {
 				
 			}
 		} catch (SocketException e) {
+			System.out.println("rpc server send pkt to rpc client time out");
 			e.printStackTrace();
 		} finally{
 			rpcSocket.close();

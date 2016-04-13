@@ -1,9 +1,13 @@
 package cs5300Project1b;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -35,6 +39,9 @@ public class AppServer extends HttpServlet {
 	private String svrID = "None";
 	private int rebootNum = 0;
 	private HashMap<String, String> idIPmap;
+	private String dbStr = "";
+	//Writer writer;
+	
     /**
      * @throws IOException 
      * @see HttpServlet#HttpServlet()
@@ -42,31 +49,36 @@ public class AppServer extends HttpServlet {
     public AppServer() throws IOException {
         super();
         idIPmap = new HashMap<String,String>();
+        //writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/usr/share/tomcat8/webapps/filename.txt"), "utf-8"));
         BufferedReader br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/local-ipv4"));
-        //BufferedReader br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/local-ipv4"));
-        this.IPAddr = br.readLine();
+        //BufferedReader br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/local-ipv4"));
+        this.IPAddr = br.readLine().trim();
         br.close();
         br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
-        //br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/ami-launch-index"));
-        this.svrID = br.readLine();
+        //br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/ami-launch-index"));
+        this.svrID = br.readLine().trim();
         br.close();
         br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
-        //br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/reboot-num"));
-        this.rebootNum = Integer.parseInt(br.readLine());
+        //br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/reboot-num"));
+        this.rebootNum = Integer.parseInt(br.readLine().trim());
         br.close();
         br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/db-data"));
-        //br = new BufferedReader(new FileReader("/Users/ishiamae/Documents/workspace5300/CS5300Project1/project1b/src/cs5300Project1b/db-data"));
-        String map = br.readLine();
+        //br = new BufferedReader(new FileReader("C:/Users/Shitong/Documents/cs5300p1/CS5300Project1/project1b/src/cs5300Project1b/db-data"));
+        String map = br.readLine().trim();
+        this.dbStr = map;
         String[] nodes = map.split("\\;");
         for(int r = 0 ; r < nodes.length;r++){
-        	String node = nodes[r];
+        	String node = nodes[r].trim();
         	//System.out.println("ip and ID is " + node );
-        	String id = node.split("\\s+")[1];
-        	String ip = node.split("\\s+")[0];
+        	String id = node.split("\\s+")[1].trim();
+        	String ip = node.split("\\s+")[0].trim();
+        	//writer.write("The id and ip of the server is: "+id+" "+ip);
         	idIPmap.put(id, ip);
         	//System.out.println("idip map"+ id+" "+ip);
         }
         br.close();
+        
+        
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
         rpcServer.setDaemon(true);
@@ -77,6 +89,7 @@ public class AppServer extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println("HTTPRequest comes in");
 		// TODO Auto-generated method stub
 		Cookie curCookie = null;
 		Cookie[] cookies = request.getCookies();
@@ -105,9 +118,11 @@ public class AppServer extends HttpServlet {
 		
 		//cookie is not null
 		else{
+        	//writer.write("the curCookie value"+curCookie.getValue());
+
 			System.out.println("the curCookie value"+curCookie.getValue());
 			
-			String[] token = URLDecoder.decode(curCookie.getValue(),"UTF-8").split("_");
+			String[] token = URLDecoder.decode(curCookie.getValue().trim(),"UTF-8").split("_");
 			
 			SessionID sid = new SessionID(token[0],Integer.parseInt(token[1]),Integer.parseInt(token[2]));
 			System.out.println("the sessionID get from cookie is: "+sid.serialize());
@@ -119,7 +134,7 @@ public class AppServer extends HttpServlet {
 
 			// write
 			if(replace){
-				String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
+				String rStr = rpcClient.SessionReadClient(sid, version, destAddr).trim();
 				if(rStr.equals("Failure")){
 					SessionID sid2 = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 					//TODO : current msg or default?
@@ -134,11 +149,14 @@ public class AppServer extends HttpServlet {
 			}	
 		}
 		newCookie.setMaxAge(Constant.expTime);
-		newCookie.setDomain(".ts679.bigdata.systems");
+		newCookie.setDomain("ts679.bigdata.systems");
+    	//writer.write("new Cookie value:" + newCookie.getValue());
+
 		System.out.println("new Cookie value:" + newCookie.getValue());
 		response.addCookie(newCookie);
 		System.out.println("add cookie ");
 		request.setAttribute("cookie", newCookie);	
+		request.setAttribute("dbStr", this.dbStr);
 		request.getRequestDispatcher("main.jsp").forward(request, response);
 	}
 
@@ -170,13 +188,14 @@ public class AppServer extends HttpServlet {
 	public Cookie AppServerWrite(SessionID sid,int version,String msg,HttpServletRequest request) throws UnsupportedEncodingException{
 		SessionState ss1 = new SessionState(sid,version,msg);
 		ArrayList<String> destAddr = genWQRandomAddrs();
+
 		String wStr = rpcClient.SessionWriteClient(ss1,destAddr);
 		//System.out.println(wStr.trim());
 		String[] reply_data = wStr.trim().split("\\__");
-		assert(reply_data.length == Constant.WQ +1);
-		SessionID sid2 = new SessionID(reply_data[Constant.WQ]);
+		//assert(reply_data.length == Constant.WQ +1);
+		SessionID sid2 = new SessionID(reply_data[reply_data.length -1]);
 		ArrayList<String> svrIDs = new ArrayList<String> ();
-		for (int i = 0; i< Constant.WQ; i++) {
+		for (int i = 0; i< reply_data.length -1; i++) {
 			svrIDs.add(reply_data[i]);
 		}
 		version++;
@@ -188,7 +207,7 @@ public class AppServer extends HttpServlet {
 	}
 	
 	public Cookie AppServerRead(SessionID sid, int version, ArrayList<String> destAddr,HttpServletRequest request) throws UnsupportedEncodingException{
-		String rStr = rpcClient.SessionReadClient(sid, version, destAddr);
+		String rStr = rpcClient.SessionReadClient(sid, version, destAddr).trim();
 		if(rStr.equals("Failure")){
 			SessionID sid2 = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 			return AppServerWrite(sid2,0,Constant.welcomeMsg,request);
@@ -229,6 +248,7 @@ public class AppServer extends HttpServlet {
 
 		ArrayList<String> destAddr = new ArrayList<String>();
 		for(int i = 0;i<Constant.W;i++){
+			//System.out.println("randomSvrID: " +randomSvrID[i]);
 			destAddr.add(idIPmap.get(String.valueOf(randomSvrID[i])));
 		}
 		return destAddr;

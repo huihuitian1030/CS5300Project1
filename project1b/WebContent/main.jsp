@@ -18,9 +18,12 @@
 	Date newDate = new Date();
     SessionState newSession = (SessionState) request.getAttribute("SessionState");
 	Cookie curCookie = (Cookie) request.getAttribute("cookie");
-    
+    String dbStr = (String) request.getAttribute("dbStr");
 %>
 
+<br />
+The database string: <%= dbStr %>
+<br />
 <div>
 
 Cookie name: <%= curCookie.getValue() %><br />

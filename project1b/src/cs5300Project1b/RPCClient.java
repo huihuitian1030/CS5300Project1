@@ -64,22 +64,24 @@ public class RPCClient {
 			do {
 				recvPkt.setLength(inBuf.length);
 		        rpcSocket.receive(recvPkt);
-		        count++;
+		        //count++;
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.trim().split("\\__");
 				System.out.println("reply msg from rpc server for read: "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
 		        recvStr = token[1]+"__"+token[2];
-		        if(recvCallID == cid && !recvStr.split("\\|")[0].equals("None")){
-		        	success = true;
+		        if(recvCallID == cid ){
+		        	count++;
+		        	if(!recvStr.split("\\|")[0].equals("None")){
+		        		success = true;}
 		        }
-		    } while(recvCallID != cid && count<Constant.R && !success);
+		    } while(count<Constant.R && !success);
 		} catch(SocketTimeoutException stoe) {
 			recvPkt = null;
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
 		}
-		
+		 
 		if(!success){
 			recvStr = "Failure";
 		}

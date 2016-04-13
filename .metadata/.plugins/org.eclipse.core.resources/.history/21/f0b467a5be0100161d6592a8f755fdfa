@@ -22,7 +22,7 @@
 	
 %>
 <br />
-Current SvrID : <%= curSvrID %>
+Current SvrID : curSvrID
 <br />
 SvrID where the session data was found: <%=preSvrID %>
 <br />

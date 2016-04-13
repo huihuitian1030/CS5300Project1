@@ -18,11 +18,8 @@
     SessionState newSession = (SessionState) request.getAttribute("SessionState");
 	Cookie curCookie = (Cookie) request.getAttribute("cookie");String dbStr = (String) request.getAttribute("dbStr");
     String preSvrID = (String) request.getAttribute("preSvrID");
-	String curSvrID = (String) request.getAttribute("curSvrID");
-	
 %>
-<br />
-Current SvrID : <%= curSvrID %>
+
 <br />
 SvrID where the session data was found: <%=preSvrID %>
 <br />

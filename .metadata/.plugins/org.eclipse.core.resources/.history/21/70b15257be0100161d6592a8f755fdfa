@@ -169,7 +169,6 @@ public class AppServer extends HttpServlet {
 			System.out.println("new Cookie value:" + newCookie.getValue());
 			response.addCookie(newCookie);
 			System.out.println("add cookie ");
-			request.setAttribute("curSvrID", this.svrID);
 			request.setAttribute("cookie", newCookie);	
 			request.setAttribute("dbStr", this.dbStr);
 			request.getRequestDispatcher("main.jsp").forward(request, response);

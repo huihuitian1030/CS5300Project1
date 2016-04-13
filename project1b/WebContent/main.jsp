@@ -14,15 +14,14 @@
 <body>
 
 <% 
-	PrintWriter output =  response.getWriter();
 	Date newDate = new Date();
     SessionState newSession = (SessionState) request.getAttribute("SessionState");
-	Cookie curCookie = (Cookie) request.getAttribute("cookie");
-    String dbStr = (String) request.getAttribute("dbStr");
+	Cookie curCookie = (Cookie) request.getAttribute("cookie");String dbStr = (String) request.getAttribute("dbStr");
+    String preSvrID = (String) request.getAttribute("preSvrID");
 %>
 
 <br />
-The database string: <%= dbStr %>
+SvrID where the session data was found: <%=preSvrID %>
 <br />
 <div>
 
@@ -54,7 +53,9 @@ Date: <%= newDate.toString() %><br />
 
 
 
-
+<br />
+Cookie Domain Name : ts679.bigdata.systems
+<br />
 
 
 

@@ -78,7 +78,6 @@ public class AppServer extends HttpServlet {
         }
         br.close();
         
-        
         rpcClient = new RPCClient(this);
         rpcServer = new RPCServer(this);
         rpcServer.setDaemon(true);
@@ -111,19 +110,25 @@ public class AppServer extends HttpServlet {
 		}
 		Cookie newCookie = null;
 		// cookie is null
-		if(curCookie==null){
+		if(curCookie==null || curCookie.getValue().equals(Constant.logoutMessage) || curCookie.getValue().equals(Constant.socketTimeOutWQMessage)){
 			SessionID sid = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 			newCookie = AppServerWrite(sid,0,Constant.welcomeMsg,request);	
 		}
 		
 		//cookie is not null
 		else{
+			
         	//writer.write("the curCookie value"+curCookie.getValue());
-
+			
 			System.out.println("the curCookie value"+curCookie.getValue());
 			
 			String[] token = URLDecoder.decode(curCookie.getValue().trim(),"UTF-8").split("_");
-			
+//			StringBuilder sb = new StringBuilder();
+//			for(int i =4;i<token.length;i++){
+//				sb.append(token[i]);
+//				sb.append(" ");
+//			}
+//			request.setAttribute("sendSvrIDs", sb.toString());
 			SessionID sid = new SessionID(token[0],Integer.parseInt(token[1]),Integer.parseInt(token[2]));
 			System.out.println("the sessionID get from cookie is: "+sid.serialize());
 			int version = Integer.parseInt(token[3]);
@@ -135,11 +140,14 @@ public class AppServer extends HttpServlet {
 			// write
 			if(replace){
 				String rStr = rpcClient.SessionReadClient(sid, version, destAddr).trim();
+				
 				if(rStr.equals("Failure")){
 					SessionID sid2 = new SessionID(this.svrID,this.rebootNum,this.rpcServer.getSessionNum());
 					//TODO : current msg or default?
 					newCookie = AppServerWrite(sid2,0,msg,request);	
 				}else{
+					String[] rtoken = rStr.split("__");
+					request.setAttribute("preSvrID", rtoken[1]);
 					newCookie = AppServerWrite(sid, version, msg, request);
 				}
 			}
@@ -148,16 +156,23 @@ public class AppServer extends HttpServlet {
 				newCookie = AppServerRead(sid,version,destAddr,request);
 			}	
 		}
-		newCookie.setMaxAge(Constant.expTime);
-		newCookie.setDomain("ts679.bigdata.systems");
-    	//writer.write("new Cookie value:" + newCookie.getValue());
+		if (newCookie.getValue().equals(Constant.socketTimeOutWQMessage)) {
+			newCookie.setMaxAge(0);
+			newCookie.setDomain(Constant.cookieDomain);
+			response.addCookie(newCookie);
+			request.getRequestDispatcher("errorPage.jsp").forward(request, response);
+		} else {
+			newCookie.setMaxAge(Constant.expTime);
+			newCookie.setDomain(Constant.cookieDomain);
+			//writer.write("new Cookie value:" + newCookie.getValue());
 
-		System.out.println("new Cookie value:" + newCookie.getValue());
-		response.addCookie(newCookie);
-		System.out.println("add cookie ");
-		request.setAttribute("cookie", newCookie);	
-		request.setAttribute("dbStr", this.dbStr);
-		request.getRequestDispatcher("main.jsp").forward(request, response);
+			System.out.println("new Cookie value:" + newCookie.getValue());
+			response.addCookie(newCookie);
+			System.out.println("add cookie ");
+			request.setAttribute("cookie", newCookie);	
+			request.setAttribute("dbStr", this.dbStr);
+			request.getRequestDispatcher("main.jsp").forward(request, response);
+		}
 	}
 
 	/**
@@ -166,21 +181,27 @@ public class AppServer extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		//doGet(request, response);
-		Cookie curCookie = null;
-		Cookie[] cookies = request.getCookies();
-		
-		if(cookies!=null ){
-			for(Cookie cookie : cookies){
-				if(cookie.getName().equals(Constant.cookieName)){
-					curCookie = cookie;
-					break;
-				}
-			}
-		}
-		if(curCookie != null){
-			curCookie.setMaxAge(0);
-			response.addCookie(curCookie);
-		}
+//		Cookie curCookie = null;
+//		Cookie[] cookies = request.getCookies();
+//		
+//		if(cookies!=null ){
+//			for(Cookie cookie : cookies){
+//				if(cookie.getName().equals(Constant.cookieName)){
+//					curCookie = cookie;
+//					break;
+//				}
+//			}
+//		}
+//		if(curCookie != null){
+//			curCookie.setMaxAge(0);
+//		}else{
+//			curCookie = new Cookie(Constant.cookieName,"None");
+//			curCookie.setMaxAge(0);
+//		}
+		Cookie newCookie = new Cookie(Constant.cookieName,Constant.logoutMessage);
+	    newCookie.setMaxAge(0);
+		newCookie.setDomain(Constant.cookieDomain);
+		response.addCookie(newCookie);
 		request.getRequestDispatcher("logout.jsp").forward(request, response);
 	}
 	
@@ -192,6 +213,10 @@ public class AppServer extends HttpServlet {
 		String wStr = rpcClient.SessionWriteClient(ss1,destAddr);
 		//System.out.println(wStr.trim());
 		String[] reply_data = wStr.trim().split("\\__");
+		if (reply_data[0].equals(Constant.socketTimeOutWQMessage)) {
+			Cookie errorCookie = new Cookie(Constant.cookieName,Constant.socketTimeOutWQMessage);
+			return errorCookie;
+		}
 		//assert(reply_data.length == Constant.WQ +1);
 		SessionID sid2 = new SessionID(reply_data[reply_data.length -1]);
 		ArrayList<String> svrIDs = new ArrayList<String> ();
@@ -213,7 +238,9 @@ public class AppServer extends HttpServlet {
 			return AppServerWrite(sid2,0,Constant.welcomeMsg,request);
 		}
 		else{
-			SessionState ss2 = new SessionState(rStr);
+			String[] token = rStr.split("__");
+			SessionState ss2 = new SessionState(token[0]);
+			request.setAttribute("preSvrID", token[1]);
 			return AppServerWrite(sid,version,ss2.getMessage(),request);
 		}
 	}

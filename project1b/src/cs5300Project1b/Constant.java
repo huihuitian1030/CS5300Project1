@@ -3,7 +3,7 @@ package cs5300Project1b;
 public class Constant {
 	protected static final String DOMAIN = "p1b";
 	protected static final String ATTRIBUTE = "IPv4";
-	protected static final int N = 5;	
+	protected static final int N = 3;	
 	protected static final String cookieName = "CS5300PROJECT";
 	protected static final int portProj1bRPC = 5300;
 	protected static final int W = 3;
@@ -20,4 +20,7 @@ public class Constant {
 	protected static final int expTime = 60 * 1000;
 	protected static final int delta = 1000;
 	protected static final int cleanUpTime = 120 * 1000;
+	protected static final String socketTimeOutWQMessage = "Cannot receive WQ reply messages";
+	protected static final String logoutMessage = "You have logout";
+	protected static final String cookieDomain = "ts679.bigdata.systems";
 }

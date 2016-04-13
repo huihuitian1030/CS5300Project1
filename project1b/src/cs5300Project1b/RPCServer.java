@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException; 
+import java.net.SocketException;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RPCServer extends Thread {
@@ -51,7 +52,7 @@ public class RPCServer extends Thread {
 					case Constant.READ:
 						System.out.println("----------RPC Server Session read-----------");
 						SessionState session = SessionRead(argument);
-						String rmsg = "" + callId + "__" + session.serialize();
+						String rmsg = "" + callId + "__" + session.serialize() + "__" + this.svrID;
 						System.out.println("rpc server send replyMsg to rpc client for read: "+ rmsg);
 						outBuf = rmsg.getBytes();
 						break;
@@ -86,12 +87,12 @@ public class RPCServer extends Thread {
 	}
 	
 	public SessionState SessionRead(String key) {
-		if (!sessionTable.containsKey(key)) {
-			return new SessionState(new SessionID("None",this.rebootNum, 0));
-		} else {
+		Date now = new Date();
+		if (sessionTable.containsKey(key) && sessionTable.get(key).getExpireTime() > now.getTime()) {
 			SessionState ss = sessionTable.get(key);
 			return ss;
-			
+		} else {
+			return new SessionState(new SessionID("None",this.rebootNum, 0));
 		}
 	}
 	

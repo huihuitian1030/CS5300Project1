@@ -22,7 +22,7 @@ public class RPCClient {
 		String recvStr = "";
 		try{
 			rpcSocket = new DatagramSocket();
-			rpcSocket.setSoTimeout(10000);
+			rpcSocket.setSoTimeout(5000);
 		}catch (SocketException e){
 			e.printStackTrace();
 		}
@@ -59,25 +59,28 @@ public class RPCClient {
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		Integer recvCallID = -1;
 		int count = 0;
+		boolean success = false;
 		try {
 			do {
 				recvPkt.setLength(inBuf.length);
 		        rpcSocket.receive(recvPkt);
+		        count++;
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.trim().split("\\__");
 				System.out.println("reply msg from rpc server for read: "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
-		        if(recvCallID == cid ){
-		        	recvStr = token[1];
+		        recvStr = token[1]+"__"+token[2];
+		        if(recvCallID == cid && !recvStr.split("\\|")[0].equals("None")){
+		        	success = true;
 		        }
-		    } while(recvCallID != cid);
+		    } while(recvCallID != cid && count<Constant.R && !success);
 		} catch(SocketTimeoutException stoe) {
 			recvPkt = null;
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
 		}
 		
-		if(recvStr.split("\\|")[0].equals("None")){
+		if(!success){
 			recvStr = "Failure";
 		}
 		rpcSocket.close();
@@ -90,7 +93,7 @@ public class RPCClient {
 		DatagramSocket rpcSocket = null;
 		try{
 			rpcSocket = new DatagramSocket();
-			rpcSocket.setSoTimeout(10000);
+			rpcSocket.setSoTimeout(5000);
 		}catch (SocketException e){
 			e.printStackTrace();
 		}
@@ -133,6 +136,7 @@ public class RPCClient {
 		byte[] inBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		Integer recvCallID = -1;
+		String recvStr = "";
 		try {
 			do {
 				recvPkt.setLength(inBuf.length);
@@ -152,13 +156,14 @@ public class RPCClient {
 			System.out.println("rpc client receive pkt from rpc server time out");
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
+		} finally {
+			if (replyList.size() < Constant.WQ) {
+				recvStr =  Constant.socketTimeOutWQMessage + "__";
+			}
+			recvStr += recvSvrID + recvSsID;
+			System.out.println("rpc client send to appserver str: "+recvStr);
+			rpcSocket.close();
 		}
-	
-		String recvStr = recvSvrID + recvSsID;
-		
-        System.out.println("rpc client send to appserver str: "+recvStr);
-		rpcSocket.close();
-		return recvStr;
+		return recvStr.trim();
 	}
-
 }

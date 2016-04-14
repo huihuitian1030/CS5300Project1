@@ -1,10 +1,12 @@
 package cs5300Project1b;
 
 import java.io.*;
-
-import javax.servlet.http.*;
 import javax.servlet.*;
 
+/**
+ * This class implement a backgound thread, use ServletContextListener to create and start the RPCServer
+ * before the HttpServlet is started.
+ */
 public class BackgroundThread implements ServletContextListener {
     private Thread t = null;
     public void contextInitialized(ServletContextEvent sce) {

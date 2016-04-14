@@ -9,15 +9,34 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+/**
+ * 
+ * This class is the implementation of RPC client. 
+ * First it gets the information from the application server.
+ * It is responsible for sending UDP packets to and receiving UDP packets from RPC server.
+ * Then RPC client send the correct response to application server.
+ *
+ */
 public class RPCClient {
 	private Integer callID = 1;
-	AppServer appServer;
-	public RPCClient(AppServer as){
-		this.appServer = as;
-	}
+	public RPCClient(){}
 	
+	
+	/**
+	 * 
+	 * @param sid , the current sessionID.
+	 * @param version, the current version number, it is the key in the session table together with the sessionID.
+	 * @param destAddr, the target servers which store the session state.
+	 * @return the message sent back to application server.
+	 * 
+	 * This function is the action for read request.
+	 * It builds socket and start the packet transformation between RPC client and RPC server.
+	 * The destAddr store two svrIDs which the current session state is written on. 
+	 * If that session state is timed out, the RPC server replies with a session ID beginning with "None".
+	 * The function traverse the destAddr to get the first valid response with the correct callID and response session ID.
+	 */
 	public String SessionReadClient(SessionID sid, int version, ArrayList<String> destAddr){
-		System.out.println("----------RPC Client Session read-----------");
+		
 		DatagramSocket rpcSocket = null;
 		String recvStr = "";
 		try{
@@ -35,12 +54,8 @@ public class RPCClient {
 		
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		String callMsg = ""+cid + "__" + Constant.READ + "__" + sid.serialize()+"--"+version;
-		System.out.println("rpc client send callmsg to rpc server in read: "+ callMsg);
 		outBuf = callMsg.getBytes(); 
 		for(String host : destAddr){
-			//if(host.equals(appServer.getAddr())){
-			//	continue;
-			//}
 			InetAddress addr = null;
 			try {
 				addr = InetAddress.getByName(host);
@@ -49,7 +64,6 @@ public class RPCClient {
 			}
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
-				//System.out.println(appServer.getSvrID()+ " send pkt to " + host);
 				rpcSocket.send(sendPkt);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -64,10 +78,8 @@ public class RPCClient {
 			do {
 				recvPkt.setLength(inBuf.length);
 		        rpcSocket.receive(recvPkt);
-		        //count++;
 		        String replyMsg = new String(recvPkt.getData());
 		        String[] token = replyMsg.trim().split("\\__");
-				System.out.println("reply msg from rpc server for read: "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
 		        recvStr = token[1]+"__"+token[token.length - 1];
 		        if(recvCallID == cid ){
@@ -89,9 +101,17 @@ public class RPCClient {
 		return recvStr;
 	}
 	
-	
+	/**
+	 * 
+	 * @param ss, the session state we want to write in the session table
+	 * @param destAddr, the W servers that the write request is sent to 
+	 * @return the message sent back to application server.
+	 * 
+	 * This function is the action for write request.
+	 * It builds socket and start the packet transformation between RPC client and RPC server.
+	 * It send write request to W RPC server and stop when receive WQ valid response with the same callID.
+	 */
 	public String SessionWriteClient(SessionState ss, ArrayList<String> destAddr){
-		System.out.println("----------RPC Client Session write-----------");
 		DatagramSocket rpcSocket = null;
 		try{
 			rpcSocket = new DatagramSocket();
@@ -107,7 +127,6 @@ public class RPCClient {
 		}
 		byte[] outBuf = new byte[Constant.UDP_PACKET_LENGTH];
 		String callMsg = ""+ cid+ "__" + Constant.WRITE + "__" + ss.serialize();
-		System.out.println("rpc client send callmsg to rpc server in write: "+ callMsg);
 		outBuf = callMsg.getBytes();
 	
 		for(String host : destAddr){
@@ -120,9 +139,7 @@ public class RPCClient {
 			
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, Constant.portProj1bRPC);
 			try {
-				System.out.println(appServer.getAddr()+ " send pkt to " + host);
 				rpcSocket.send(sendPkt);
-				//System.out.println("send packet sucess in RPC client write!");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -140,7 +157,6 @@ public class RPCClient {
 				recvPkt.setLength(inBuf.length);
 		        rpcSocket.receive(recvPkt);
 		        String replyMsg = new String(recvPkt.getData());
-		        System.out.println("reply msg from rpc server for write: "+replyMsg);
 		        String[] token = replyMsg.trim().split("\\__");
 		        recvCallID = new Integer(token[0]);
 		        if(recvCallID == cid){
@@ -151,7 +167,6 @@ public class RPCClient {
 		    } while(replyList.size() < Constant.WQ);
 		} catch(SocketTimeoutException stoe) {
 			stoe.printStackTrace();
-			System.out.println("rpc client receive pkt from rpc server time out");
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
 		} finally {
@@ -159,7 +174,6 @@ public class RPCClient {
 				recvStr =  Constant.socketTimeOutWQMessage + "__";
 			}
 			recvStr += recvSvrID + recvSsID;
-			System.out.println("rpc client send to appserver str: "+recvStr);
 			rpcSocket.close();
 		}
 		return recvStr.trim();

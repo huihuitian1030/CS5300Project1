@@ -1,6 +1,13 @@
 package cs5300Project1b;
 
 import java.util.Date;
+/**
+ * 
+ * SessionState object contains all the session information stored in the Session table including 
+ * sessionID, version number, display message and session expiration time. Also this class provide get, set functions 
+ * for each field of object and serialize, deserialize method.
+ *
+ */
 
 public class SessionState {
 	

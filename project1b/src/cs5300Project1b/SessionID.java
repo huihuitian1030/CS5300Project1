@@ -1,5 +1,11 @@
 package cs5300Project1b;
-
+/**
+ * 
+ * SessionID class generate a globally unique SessionID object which contains server ID, reboot number 
+ * and session number three fields. Also this class provide get, set functions for each field and serialize
+ * and deserialize method.
+ *
+ */
 public class SessionID {
 	
 	private String svrID;

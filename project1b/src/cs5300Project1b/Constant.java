@@ -1,5 +1,7 @@
 package cs5300Project1b;
-
+/**
+ * This class recored all the global Constant string and number used in this project.
+ */
 public class Constant {
 	protected static final String DOMAIN = "p1b";
 	protected static final String ATTRIBUTE = "IPv4";
@@ -10,8 +12,6 @@ public class Constant {
 	protected static final int WQ = 2;
 	protected static final int R = 2;
 	protected static final int UDP_PACKET_LENGTH = 512;
-	protected static final int ONE_SECOND_IN_MILLIS=1000;
-	protected static final int ONE_MINUTE_IN_MILLIS=60000;
 	protected static int msgMaxLen = 512 - 4 * 8 - 32 - 6;
 	protected static final String welcomeMsg ="Hello User!";
 	protected static final String WRITE = "sessionWrite";

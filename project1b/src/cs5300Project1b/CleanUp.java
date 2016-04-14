@@ -4,13 +4,26 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This class is a single deamon thread used to do the garbage collection.
+ * It will be constructed though RPCServer.
+ *
+ */
 public class CleanUp extends Thread{
 	private ConcurrentHashMap<String, SessionState> sessionTable;
 	
+	/**
+	 * The constructor of CleanUp thread, set the session table filed.
+	 * @param sessionTable, the session table need to do the garbage collection.
+	 */
 	public CleanUp (ConcurrentHashMap<String, SessionState> sessionTable) {
 		this.sessionTable = sessionTable;
 	}
 	
+	/**
+	 * This thread will keep running this function when start. It will go over the sessionTable and remove the
+	 * expired session from session table every constant clean up time. 
+	 */
 	@Override
 	public void run() {
 		try {

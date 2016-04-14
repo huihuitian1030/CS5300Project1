@@ -24,11 +24,11 @@
 <br />
 Current SvrID : <%= curSvrID %>
 <br />
-SvrID where the session data was found: <%=preSvrID %>
+SvrID where the session data was found: <%=preSvrID %><br />
 <br />
 <div>
 
-Cookie name: <%= curCookie.getValue() %><br />
+Current Cookie value: <%= curCookie.getValue() %><br />
 Expiration time: <%= new Date(newSession.getExpireTime()).toString() %> <br />
 </div>
 

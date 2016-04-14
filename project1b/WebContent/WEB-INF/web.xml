@@ -9,4 +9,13 @@
     <welcome-file>default.htm</welcome-file>
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
+  
+  <servlet>
+        <servlet-name>AppServer</servlet-name>
+        <servlet-class>cs5300Project1b.AppServer</servlet-class>
+    </servlet>
+
+    <listener>
+        <listener-class>cs5300Project1b.BackgroundThread</listener-class>
+    </listener>
 </web-app>

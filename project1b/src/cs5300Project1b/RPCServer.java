@@ -1,29 +1,42 @@
 package cs5300Project1b;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RPCServer extends Thread {
-	private static Integer sessNum = 1;
+
 	private String svrID;
 	private int rebootNum;
 	private ConcurrentHashMap<String, SessionState> sessionTable;
 	private Thread clean;
+	
+	private HashMap<String, String> idIPmap;
 
-	public RPCServer (AppServer appServer) {
-		this.svrID = appServer.getSvrID();
-		this.rebootNum = appServer.getRebootNum();
+	public RPCServer () throws IOException {
+	     
+	    BufferedReader br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
+	    this.svrID = br.readLine().trim();
+	    br.close();
+	    br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
+	    this.rebootNum = Integer.parseInt(br.readLine().trim());
+	    br.close();
+		
+		
 		sessionTable = new ConcurrentHashMap<String, SessionState>();
 		clean = new CleanUp(sessionTable);
 		clean.setDaemon(true);
 		clean.start();
-		
 	}
+	
 	
 	@Override
 	public void run() {
@@ -114,11 +127,5 @@ public class RPCServer extends Thread {
 		return currentID;
 	}
 	
-	public int getSessionNum(){
-		int res = sessNum;
-		synchronized(sessNum) {
-			sessNum++;
-		}
-		return res;
-	}
+
 }

@@ -69,7 +69,7 @@ public class RPCClient {
 		        String[] token = replyMsg.trim().split("\\__");
 				System.out.println("reply msg from rpc server for read: "+ replyMsg);
 		        recvCallID = new Integer(token[0]);
-		        recvStr = token[1]+"__"+token[2];
+		        recvStr = token[1]+"__"+token[token.length - 1];
 		        if(recvCallID == cid ){
 		        	count++;
 		        	if(!recvStr.split("\\|")[0].equals("None")){
@@ -111,10 +111,6 @@ public class RPCClient {
 		outBuf = callMsg.getBytes();
 	
 		for(String host : destAddr){
-//			if(host.equals(appServer.getAddr())){
-//				continue;
-//			}
-			
 			InetAddress addr = null;
 			try {
 				addr = InetAddress.getByName(host);
@@ -154,7 +150,7 @@ public class RPCClient {
 		        }
 		    } while(replyList.size() < Constant.WQ);
 		} catch(SocketTimeoutException stoe) {
-			recvPkt = null;
+			stoe.printStackTrace();
 			System.out.println("rpc client receive pkt from rpc server time out");
 		} catch(IOException ioe) {
 			ioe.printStackTrace();

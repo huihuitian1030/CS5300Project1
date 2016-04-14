@@ -52,12 +52,12 @@ public class AppServer extends HttpServlet {
         BufferedReader br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/local-ipv4"));
         this.IPAddr = br.readLine().trim();
         br.close();
-        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
-        //this.svrID = br.readLine().trim();
-        //br.close();
-        //br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
-        //this.rebootNum = Integer.parseInt(br.readLine().trim());
-        //br.close();
+        br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/ami-launch-index"));
+        this.svrID = br.readLine().trim();
+        br.close();
+        br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/reboot-num"));
+        this.rebootNum = Integer.parseInt(br.readLine().trim());
+        br.close();
         br = new BufferedReader(new FileReader("/usr/share/tomcat8/webapps/db-data"));
         String map = br.readLine().trim();
         
